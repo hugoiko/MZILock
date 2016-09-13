@@ -1,0 +1,1010 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"std",
+				"std_logic_vector"
+			],
+			[
+				"std_l",
+				"std_logic_vector"
+			],
+			[
+				"data_in",
+				"data_in_shifted_d3"
+			],
+			[
+				"clk",
+				"clk_period"
+			],
+			[
+				"outpu",
+				"output_cnt_gray3"
+			],
+			[
+				"out",
+				"output_cnt_gray2"
+			],
+			[
+				"output",
+				"output_cnt_gray1"
+			],
+			[
+				"inpu",
+				"input_cnt_gray"
+			],
+			[
+				"input_cn",
+				"input_cnt_grey"
+			],
+			[
+				"bits_",
+				"bits_x_sub_frame"
+			],
+			[
+				"std_lo",
+				"std_logic_vector"
+			],
+			[
+				"std_",
+				"std_logic_vector"
+			],
+			[
+				"global",
+				"global_min_updated"
+			],
+			[
+				"BITS_",
+				"BITS_COUNTER-1"
+			],
+			[
+				"clk_",
+				"clk_data_enable"
+			],
+			[
+				"BIT",
+				"BITS_Y"
+			],
+			[
+				"time",
+				"timestamp"
+			],
+			[
+				"user_",
+				"user_pixel_y_in"
+			],
+			[
+				"BITX",
+				"BITS_X-1"
+			],
+			[
+				"stdlv",
+				"stdlv"
+			],
+			[
+				"hs",
+				"user_hsync_in"
+			],
+			[
+				"bBac",
+				"bBackgroundY2"
+			],
+			[
+				"bB",
+				"bBackgroundY1"
+			],
+			[
+				"stdLo",
+				"std_logic_vector"
+			],
+			[
+				"pixe",
+				"user_pixel_x_in"
+			],
+			[
+				"user",
+				"user_pixel_x_in"
+			],
+			[
+				"pixe_",
+				"pixel_x_start"
+			],
+			[
+				"BITS_X",
+				"BITS_X"
+			],
+			[
+				"bWin",
+				"bWindowLowOK"
+			],
+			[
+				"ST",
+				"STATE_WAIT_FOR_RAM_FILL_TO_FINISH"
+			],
+			[
+				"user_pi",
+				"user_pixel_x_in"
+			],
+			[
+				"BIT_X",
+				"BITS_X"
+			],
+			[
+				"write",
+				"write_address"
+			],
+			[
+				"add",
+				"address_width-1"
+			],
+			[
+				"DATA_",
+				"DATA_WIDTH-1"
+			],
+			[
+				"STA",
+				"STATE_IDLE"
+			],
+			[
+				"user_r_",
+				"user_r_in_escaped"
+			],
+			[
+				"user_r",
+				"user_r_in_escaped"
+			],
+			[
+				"std_logic",
+				"std_logic_vector"
+			],
+			[
+				"rst_",
+				"rst_for_serial_bus_counter"
+			],
+			[
+				"rst_for",
+				"rst_for_serial_bus_counter"
+			],
+			[
+				"rst",
+				"rst_for_serial_bus"
+			],
+			[
+				"n_",
+				"n_pixels_x_active"
+			],
+			[
+				"ts0",
+				"ts0_lsb_new"
+			],
+			[
+				"delta",
+				"delta_T_AB_initial"
+			],
+			[
+				"delt",
+				"delta_T_AB"
+			],
+			[
+				"n_bits_",
+				"n_bits_igm"
+			],
+			[
+				"x_coarse_",
+				"x_coarse_slavetransfer"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"contents": "Searching 728 files for \"ddc1_angle_select\"\n\nD:\\Université\\Dropbox\\22_H2015\\Code_packages_for_companies\\digital_servo_python_gui\\SuperLaserLand_JD2.py:\n  292          self.ddc1_filter_select = 0\n  293          self.ddc0_angle_select = 0\n  294:         self.ddc1_angle_select = 0\n  295          self.residuals0_phase_or_freq = 0\n  296          self.residuals1_phase_or_freq = 0\n  ...\n 2262          else:\n 2263              filter_select = self.ddc1_filter_select\n 2264:             angle_select  = self.ddc1_angle_select\n 2265              \n 2266          \n ....\n 2301          else:\n 2302              filter_select = self.ddc1_filter_select\n 2303:             angle_select  = self.ddc1_angle_select\n 2304          \n 2305          if filter_select == 0:\n ....\n 2770          elif adc_number == 1:\n 2771              self.ddc1_filter_select = filter_select\n 2772:             self.ddc1_angle_select = angle_select\n 2773              \n 2774          self.set_ddc_filter_select_register()\n ....\n 2796          print('set_ddc_filter_select_register: FILTER_SELECT %d' % register_value)\n 2797          \n 2798:         register_value = self.ddc0_angle_select + (self.ddc1_angle_select<<4) \n 2799          self.send_bus_cmd_16bits(self.BUS_ADDR_ddc_angle_select, register_value)\n 2800          print('set_ddc_filter_select_register: ANGLE_SELECT %d' % register_value)\n\nD:\\Université\\Dropbox\\22_H2015\\Code_packages_for_companies\\digital_servo_python_gui\\SuperLaserLand_JD_RP.py:\n  294          self.ddc1_filter_select = 0\n  295          self.ddc0_angle_select = 0\n  296:         self.ddc1_angle_select = 0\n  297          self.residuals0_phase_or_freq = 0\n  298          self.residuals1_phase_or_freq = 0\n  ...\n 2065          else:\n 2066              filter_select = self.ddc1_filter_select\n 2067:             angle_select  = self.ddc1_angle_select\n 2068              \n 2069          \n ....\n 2104          else:\n 2105              filter_select = self.ddc1_filter_select\n 2106:             angle_select  = self.ddc1_angle_select\n 2107          \n 2108          if filter_select == 0:\n ....\n 2540          elif adc_number == 1:\n 2541              self.ddc1_filter_select = filter_select\n 2542:             self.ddc1_angle_select = angle_select\n 2543              \n 2544          self.set_ddc_filter_select_register()\n ....\n 2566          print('set_ddc_filter_select_register: FILTER_SELECT %d' % register_value)\n 2567          \n 2568:         register_value = self.ddc0_angle_select + (self.ddc1_angle_select<<4) \n 2569          self.send_bus_cmd_16bits(self.BUS_ADDR_ddc_angle_select, register_value)\n 2570          print('set_ddc_filter_select_register: ANGLE_SELECT %d' % register_value)\n\n10 matches across 2 files\n\n\nSearching 728 files for \"set_ddc_filter\"\n\nD:\\Université\\Dropbox\\22_H2015\\Code_packages_for_companies\\digital_servo_python_gui\\DisplayDividerAndResidualsStreamingSettingsWindow.py:\n  146          elif self.qchk_inphase_lsb0.isChecked():\n  147              angle_select = 4\n  148:         self.sl.set_ddc_filter(adc_number, filter_select, angle_select)\n  149          \n  150          adc_number = 1\n  ...\n  165          elif self.qchk_inphase_lsb1.isChecked():\n  166              angle_select = 4\n  167:         self.sl.set_ddc_filter(adc_number, filter_select, angle_select)\n  168           \n  169          \n\nD:\\Université\\Dropbox\\22_H2015\\Code_packages_for_companies\\digital_servo_python_gui\\SuperLaserLand_JD2.py:\n 2760          return\n 2761          \n 2762:     def set_ddc_filter(self, adc_number, filter_select, angle_select = 0):\n 2763          if self.bVerbose == True:\n 2764:             print('set_ddc_filter')\n 2765              \n 2766          \n ....\n 2772              self.ddc1_angle_select = angle_select\n 2773              \n 2774:         self.set_ddc_filter_select_register()\n 2775          \n 2776      def set_residuals_phase_or_freq(self, adc_number, phase_or_freq):\n ....\n 2784              self.residuals1_phase_or_freq = phase_or_freq\n 2785              \n 2786:         self.set_ddc_filter_select_register()\n 2787          \n 2788:     def set_ddc_filter_select_register(self):\n 2789          if self.bVerbose == True:\n 2790:             print('set_ddc_filter_select_register')\n 2791              \n 2792          \n ....\n 2794          register_value = self.ddc0_filter_select + (self.ddc1_filter_select<<2) + (self.residuals0_phase_or_freq<<4) + (self.residuals1_phase_or_freq<<5)\n 2795          self.send_bus_cmd_16bits(self.BUS_ADDR_ddc_filter_select, register_value)\n 2796:         print('set_ddc_filter_select_register: FILTER_SELECT %d' % register_value)\n 2797          \n 2798          register_value = self.ddc0_angle_select + (self.ddc1_angle_select<<4) \n 2799          self.send_bus_cmd_16bits(self.BUS_ADDR_ddc_angle_select, register_value)\n 2800:         print('set_ddc_filter_select_register: ANGLE_SELECT %d' % register_value)\n 2801          \n 2802          \n\nD:\\Université\\Dropbox\\22_H2015\\Code_packages_for_companies\\digital_servo_python_gui\\SuperLaserLand_JD_RP.py:\n 2530          return\n 2531          \n 2532:     def set_ddc_filter(self, adc_number, filter_select, angle_select = 0):\n 2533          if self.bVerbose == True:\n 2534:             print('set_ddc_filter')\n 2535              \n 2536          \n ....\n 2542              self.ddc1_angle_select = angle_select\n 2543              \n 2544:         self.set_ddc_filter_select_register()\n 2545          \n 2546      def set_residuals_phase_or_freq(self, adc_number, phase_or_freq):\n ....\n 2554              self.residuals1_phase_or_freq = phase_or_freq\n 2555              \n 2556:         self.set_ddc_filter_select_register()\n 2557          \n 2558:     def set_ddc_filter_select_register(self):\n 2559          if self.bVerbose == True:\n 2560:             print('set_ddc_filter_select_register')\n 2561              \n 2562          \n ....\n 2564          register_value = self.ddc0_filter_select + (self.ddc1_filter_select<<2) + (self.residuals0_phase_or_freq<<4) + (self.residuals1_phase_or_freq<<5)\n 2565          self.send_bus_cmd_16bits(self.BUS_ADDR_ddc_filter_select, register_value)\n 2566:         print('set_ddc_filter_select_register: FILTER_SELECT %d' % register_value)\n 2567          \n 2568          register_value = self.ddc0_angle_select + (self.ddc1_angle_select<<4) \n 2569          self.send_bus_cmd_16bits(self.BUS_ADDR_ddc_angle_select, register_value)\n 2570:         print('set_ddc_filter_select_register: ANGLE_SELECT %d' % register_value)\n 2571          \n 2572          \n\n18 matches across 3 files\n",
+			"settings":
+			{
+				"buffer_size": 6513,
+				"line_ending": "Windows",
+				"name": "Find Results",
+				"scratch": true
+			}
+		},
+		{
+			"file": "DisplayDividerAndResidualsStreamingSettingsWindow.py",
+			"settings":
+			{
+				"buffer_size": 21621,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "SuperLaserLand_JD_RP.py",
+			"settings":
+			{
+				"buffer_size": 127154,
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"last_filter": "gene",
+		"selected_items":
+		[
+			[
+				"gene",
+				"Generate VHDL Testbench"
+			],
+			[
+				"gen",
+				"Generate VHDL Testbench"
+			],
+			[
+				"pack",
+				"PackageResourceViewer: Open Resource"
+			],
+			[
+				"ge",
+				"Generate VHDL Testbench"
+			],
+			[
+				"gee",
+				"Generate VHDL Testbench"
+			],
+			[
+				"inst",
+				"Package Control: Install Package"
+			],
+			[
+				"packres",
+				"PackageResourceViewer: Open Resource"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 528.0
+	},
+	"console":
+	{
+		"height": 234.0,
+		"history":
+		[
+			"view.run_command('insertvhdltestbench')",
+			"os.path.splitext(r'D:\\Université\\Dropbox\\22_H2015\\DARPA Pulse\\Legacy code\\AD9912_DDS_controller')",
+			"os.path.splitext(r'D:\\Université\\Dropbox\\22_H2015\\DARPA Pulse\\Legacy code\\AD9912_DDS_controller.vhd')",
+			"os.path.splitext('D:\\Université\\Dropbox\\22_H2015\\DARPA Pulse\\Legacy code\\AD9912_DDS_controller.vhd')",
+			"import os",
+			"view.run_command('insertvhdltestbench')",
+			"import os",
+			"print('test', 4, 'test')",
+			"print('test')",
+			"print 'test'",
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/D/Université/Dropbox/22_H2015/Code_packages_for_companies/digital_servo_python_gui"
+	],
+	"file_history":
+	[
+		"/D/Projets_Xilinx/RedPitaya/shared/libredpitaya/system.c",
+		"/D/Projets_Xilinx/RedPitaya/fpga/rtl/red_pitaya_top.v",
+		"/D/Projets_Xilinx/RedPitaya/fpga/project/redpitaya.srcs/sources_1/imports/fpga/rtl/red_pitaya_top.v",
+		"//publique.copl.ulaval.ca/Publique/FROST/Thomas/Matlab_offline/Rto_offline_v5.m",
+		"//publique.copl.ulaval.ca/Publique/FROST/Thomas/Matlab_offline/main_offline.m",
+		"/C/Users/JD/AppData/Local/Temp/PSDintegration.m",
+		"/C/ti/fftlib_c66x_2_0_0_2/packages/ti/fftlib/src/fft_sp_1d_c2c/k1/fft_sp_1d_c2c_k1_66_LE_ELF/Release/fft_sp_1d_c2c.asm",
+		"/D/PULSE/PULSE/FPGA/src/Processing/dsp_cw_link_control.v",
+		"/D/PULSE/PULSE/FPGA/src/Processing/processing_wrapper.v",
+		"/D/PULSE/PULSE/FPGA/src/VC707 HDMI interface/video_xy_plot.vhd",
+		"/D/PULSE/PULSE/FPGA/src/VC707 HDMI interface/video_display.vhd",
+		"/D/PULSE/test_simple_stuff/test_simple_stuff.srcs/sources_1/load_data_from_file.vhd",
+		"/D/PULSE/PULSE/FPGA/src/VC707 HDMI interface/load_data_from_file.vhd",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/New code/compute_log2.vhd",
+		"/D/PULSE/PULSE/FPGA/src/Processing/Comms_and_PRBS/slave_sync_protocol.vhd",
+		"/D/PULSE/PULSE/FPGA/src/Processing/Comms_and_PRBS/comms_and_prbs_wrapper.vhd",
+		"/D/PULSE/PULSE/FPGA/src/VC707 HDMI interface/igm_display.vhd",
+		"/D/PULSE/PULSE/FPGA/src/VC707 HDMI interface/video_plot.vhd",
+		"/D/PULSE/PULSE/FPGA/src/GPIO/GPIO_wrapper.vhd",
+		"/D/PULSE/PULSE/PC/Python/data_utilities.py",
+		"/D/PULSE/PULSE/FPGA/src/Clocking/sysclk_wrapper.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/load_data_from_file.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/progressbar_display_testbench.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/data_I_rom.txt",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/New code/VC707 HDMI interface/video_xy_plot_testbench.vhd",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/New code/VC707 HDMI interface/video_xy_plot.vhd",
+		"/D/Université/Dropbox/22_H2015/SublimeTextPlugins/MyDevelopment/test_theme.tmTheme",
+		"/C/Users/JD/AppData/Roaming/Sublime Text 3/Packages/Color Scheme - Default/Monokai.tmTheme",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/simple_dualport_ram.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/progressbar_display.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/igm_display_testbench.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/video_plot_testbench.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/igm_display.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/HDMI_ADV7511_serial_controller.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/simple_dualport_ram_testbench.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/HDMI_ADV7511_interface.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/Clocking/sysclk_wrapper.vhd",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/New code/VC707 HDMI interface/i2c_reference_log_flatron.txt",
+		"/D/PULSE/PULSE/FPGA/src/Processing/Self_Test/load_data_from_file.vhd",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/New code/simple_dualport_ram_testbench.vhd",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/New code/simple_dualport_ram.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/constrs_1/constraints.xdc",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/constrs_1/new/debug_constraints.xdc",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/top_level.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/axi_hdmi_tx_es.v",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/New code/VC707 HDMI interface/i2c_reference_log_no_cable.txt",
+		"/D/PULSE/PULSE/FPGA/src/Processing/Self_Test/adc_power_detector_wrapper.vhd",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/top_sync_vg_pattern.v",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/pattern_vg.v",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/VC707 HDMI interface/sync_vg.v",
+		"//tsclient/D/PULSE/no-OS/adv7511/evaluate/vc707/evaluate.bat",
+		"//tsclient/D/PULSE/no-OS/adv7511/evaluate/vc707/evaluate.tcl",
+		"/D/PULSE/VC707_HDMI_interface_test4/VC707_HDMI_interface_test4.srcs/sources_1/uart/UART_to_internal_bus_interface.vhd",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/New code/VC707 HDMI interface/waveform_reg_readout.csv",
+		"/D/Projets_Xilinx/pulse_doppler_tests4/pulse_doppler_tests4.srcs/sources_1/imports/selftest module/test_sequencer.vhd",
+		"/D/Projets_Xilinx/pulse_doppler_tests4/pulse_doppler_tests4.srcs/sources_1/imports/selftest module/test_sequencer_testbench.vhd",
+		"/D/Projets_Xilinx/pulse_doppler_tests2/pulse_doppler_tests2.srcs/sim_1/imports/selftest module/sync_self_test.vhd",
+		"/C/Users/JD/AppData/Roaming/Xilinx/Vivado/vivado.log",
+		"/D/Université/Dropbox/FTIR (1)/Hugo/code vhdl/New code/sync_self_test_entity_only.vhd",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/New code/igm_dds_testbench.vhd",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/Legacy code/adjustable_boxcar_filter_v2_testbench.vhd",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/Legacy code/AD9912_DDS_controller_testbench.vhd",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/Legacy code/AD9912_DDS_controller_testbench_testbench.vhd",
+		"/C/Users/JD/AppData/Local/Temp/cntr.v",
+		"/C/Users/JD/AppData/Local/Temp/Avis.TXT",
+		"/C/Users/JD/AppData/Roaming/Sublime Text 3/Packages/User/Matlab.sublime-settings",
+		"/D/Université/Dropbox/22_H2015/MATLAB/QueueClass.m",
+		"/C/Users/JD/AppData/Roaming/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/D/Université/Dropbox/22_H2015/MATLAB/new_doppler_processing.m",
+		"/D/Université/Dropbox/FTIR (1)/Hugo/code vhdl/matched_filter/matched_filter.xci",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/New code/slave_sync_protocol_v2.vhd",
+		"/D/PULSE/doppler/FPGA/ip/matched_filter/matched_filter.xci",
+		"/D/Université/Dropbox/FTIR (1)/Hugo/code vhdl/matched_filter/matched_filter_sim_netlist.vhdl",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/New code/test2/waveform.csv",
+		"/D/Université/Dropbox/22_H2015/MATLAB/new_doppler_processing",
+		"/C/Users/JD/AppData/Roaming/Sublime Text 3/Packages/User/JSON.sublime-settings",
+		"/C/Users/JD/AppData/Roaming/Sublime Text 3/Packages/User/Base File.sublime-settings",
+		"/C/Users/JD/AppData/Local/Temp/LCFEM/{121E3DD9-A945-4D5D-9641-B1980A97A35C}/FMC108_wrapper.vhd",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/Doppler analysis/comms_and_prbs_receiver_v2.vhd",
+		"/C/Users/JD/AppData/Local/Temp/LCFEM/{809A21A1-77D1-41A0-8F8B-69FE124D31D4}/coherent_comm_transmitter_wrapper.vhd",
+		"/C/Users/JD/AppData/Local/Temp/LCFEM/{53FF1F5C-E308-4651-BB33-FBE25C904322}/igm_processing_v3.vhd",
+		"/D/Université/Dropbox/22_H2015/DARPA Pulse/Doppler analysis/comms_and_prbs_wrapper.vhd",
+		"/C/Users/JD/AppData/Local/Temp/LCFEM/{689053F7-8C22-4F1A-84EE-B6D7B6A8BFBC}/dds_microwave_gain.vhd",
+		"/C/Users/JD/AppData/Local/Temp/LCFEM/{F9EE96C1-380E-4D54-BE81-ACDB9D59FA56}/AD9912_wrapper.vhd",
+		"/C/Users/JD/AppData/Local/Temp/LCFEM/{D839F131-0FB9-4161-A000-C18617EE70D4}/AD9912_DDS_controller.vhd",
+		"/C/Users/JD/AppData/Local/Temp/LCFEM/{8CBA235C-2738-4F32-9811-D18F9270D200}/SPI_master_write_only.vhd",
+		"/C/Users/JD/AppData/Local/Temp/LCFEM/{597A8CFF-8579-438C-8972-6668F848B6FC}/ibus_slave.v",
+		"/C/Users/JD/AppData/Local/Temp/LCFEM/{3530E4D9-C42D-46AB-8803-1BC6D8788586}/ibus_commands.v",
+		"/F/_JD/FPGA_code/ML605/comb_laser_tracking/triggering_logic_v1_testbench.vhd",
+		"/D/Université/Dropbox/22_H2015/Red Pitaya/digital_servo_fpga_firmware/SuperLaserLand.v",
+		"/D/Université/Dropbox/22_H2015/Red Pitaya/monitor-tcp/monitor-tcp.c",
+		"/D/Université/Dropbox/22_H2015/Contrat Novasyst/HITRAN/readme-1.txt",
+		"/D/Université/Dropbox/22_H2015/Contrat Novasyst/HITRAN/molecules_ID.txt",
+		"/D/Université/Dropbox/15_E2012/MATLAB/Faddeeva/README-MATLAB.txt",
+		"/C/Users/JD/AppData/Local/Temp/effet_talbot_v2.m",
+		"/D/Université/Dropbox/22_H2015/Contrat Novasyst/HITRAN/56cb3b63.par"
+	],
+	"find":
+	{
+		"height": 34.0
+	},
+	"find_in_files":
+	{
+		"height": 90.0,
+		"where_history":
+		[
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"qchk_quadrature_msb0",
+			"ddcClicked",
+			"set_ddc_filter",
+			"ddc1_angle_select",
+			"angleSelect_0",
+			"loc_pm_noise_sans_talbot_x1_right_1360",
+			"ref_igm",
+			"ref_igm_in_pixels",
+			"ref_igm",
+			"a",
+			"data_in",
+			"comms_voltage_adj_16bits_in_pixels",
+			"coarse_TWTFT_completed",
+			"user_rgb_out",
+			"user_rgb_in",
+			"dout_amp_0",
+			"background_rgb_reg2",
+			"user_rgb_in",
+			"ref_igm_in_pixels",
+			"ref_igm",
+			"video_display",
+			"BACKGROUND_COLOR",
+			"THRESHOLD_COLOR",
+			"bThresholdPixel",
+			"threshold_for_display_only",
+			"coarse_TWTFT_completed",
+			"muxed_coarse_TWTFT_completed",
+			"actual_coarse_TWTFT_completed",
+			"sync_protocol_completed",
+			"actual_coarse_TWTFT_completed",
+			"muxed_coarse_TWTFT_completed",
+			"fake_coarse_TWTFT_completed",
+			"clk_sys",
+			"clk",
+			"sma_clock_p_clk",
+			"sma_gpio_p_clk",
+			"USER_SMA_GPIO_P",
+			"dataIQ",
+			"length(dataIQ)",
+			"dataIQ",
+			"dataIQ1",
+			"DROPOUT_REPORTING_DELAY",
+			"uint2bytes",
+			";",
+			"to",
+			"failure_code",
+			"failure_code_next",
+			"failure_code",
+			"failure_code_slave",
+			"failure_code",
+			"failure_code_internal",
+			"autotrigger_output",
+			"delayed_trigger",
+			"local_igm_clk_enable",
+			"comms_payload_transmit",
+			"freq_error",
+			"data_packet",
+			"missing_packet",
+			"_int,",
+			"HDMI_R_VSYNC",
+			";",
+			"CLK_PERIOD",
+			"clk_enable",
+			"=>",
+			"CLK_PERIOD",
+			"IIC_SCL_MAIN_LS",
+			"clk_sys_200MHz",
+			"rom_read_address",
+			"data_in_x",
+			"_interm2",
+			"clk_data",
+			";",
+			":=",
+			":",
+			"user_pixel_clk_in",
+			"clk_period",
+			"bWindowStopOK_d1",
+			"write_address",
+			"write_data",
+			"BITS_Y",
+			"BITS_X",
+			"std_logic",
+			"input_cnt_gray",
+			"input_cnt_grey",
+			"bits_counter",
+			":=",
+			"threshold_low",
+			"trigger_addr",
+			"read_addr",
+			"addr_offset",
+			"threshold_low",
+			"fake_comms",
+			"bCommsEnabled",
+			"BITS_PER_PIXEL",
+			"user_rgb_in",
+			"user_r_in",
+			"user_",
+			"fake_",
+			"fake_comms_counter3",
+			"fake_comms_counter2",
+			"fake_comms_counter1",
+			"fake_comms_counter2",
+			"16",
+			"2",
+			"igm",
+			"user_r",
+			"user_r_in",
+			"user_r_",
+			"user_r_out",
+			"BITS_PER_PIXEL",
+			"ACTIVE_COLOR",
+			"user_r_in",
+			"user_r_out",
+			"user_r_in",
+			"user_r_in_d3",
+			"user_r_out",
+			"user_b_in",
+			"user_g_in",
+			"user_r_in_",
+			"user_r",
+			"_interm1,",
+			"=>",
+			"_interm1",
+			"user_",
+			"and",
+			"bWindowStopOK",
+			"user_vsync_in",
+			"_d5"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"fullfile",
+			"std_logic",
+			"std_logic_vector",
+			"rst",
+			"clk"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 1,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6513,
+						"regions":
+						{
+							"match":
+							{
+								"flags": 112,
+								"regions":
+								[
+									[
+										257,
+										274
+									],
+									[
+										503,
+										520
+									],
+									[
+										683,
+										700
+									],
+									[
+										881,
+										898
+									],
+									[
+										1162,
+										1179
+									],
+									[
+										1577,
+										1594
+									],
+									[
+										1823,
+										1840
+									],
+									[
+										2003,
+										2020
+									],
+									[
+										2201,
+										2218
+									],
+									[
+										2482,
+										2499
+									],
+									[
+										3006,
+										3020
+									],
+									[
+										3229,
+										3243
+									],
+									[
+										3479,
+										3493
+									],
+									[
+										3613,
+										3627
+									],
+									[
+										3769,
+										3783
+									],
+									[
+										4006,
+										4020
+									],
+									[
+										4070,
+										4084
+									],
+									[
+										4175,
+										4189
+									],
+									[
+										4522,
+										4536
+									],
+									[
+										4802,
+										4816
+									],
+									[
+										5064,
+										5078
+									],
+									[
+										5198,
+										5212
+									],
+									[
+										5354,
+										5368
+									],
+									[
+										5591,
+										5605
+									],
+									[
+										5655,
+										5669
+									],
+									[
+										5760,
+										5774
+									],
+									[
+										6107,
+										6121
+									],
+									[
+										6387,
+										6401
+									]
+								],
+								"scope": ""
+							}
+						},
+						"selection":
+						[
+							[
+								3011,
+								3011
+							]
+						],
+						"settings":
+						{
+							"detect_indentation": false,
+							"line_numbers": false,
+							"output_tag": 2,
+							"result_base_dir": "",
+							"result_file_regex": "^([^ 	].*):$",
+							"result_line_regex": "^ +([0-9]+):",
+							"scroll_past_end": true,
+							"syntax": "Packages/Default/Find Results.hidden-tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 924.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "DisplayDividerAndResidualsStreamingSettingsWindow.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 21621,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								20820,
+								20820
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 6071.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "SuperLaserLand_JD_RP.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 127154,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								125201,
+								125201
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 35179.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 22.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 94.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "digital_servo_python_gui.sublime-project",
+	"replace":
+	{
+		"height": 40.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"dpll",
+				"sources_1\\DigitalPLL\\dpll_wrapper.v"
+			],
+			[
+				"redpitaytop",
+				"sources_1\\imports\\rtl\\red_pitaya_top.v"
+			],
+			[
+				"video",
+				"FPGA\\src\\VC707 HDMI interface\\video_display.vhd"
+			],
+			[
+				"proce",
+				"DSP\\processing.cpp"
+			],
+			[
+				"xy",
+				"VC707 HDMI interface\\video_xy_plot.vhd"
+			],
+			[
+				"load_data_from_file",
+				"VC707 HDMI interface\\load_data_from_file.vhd"
+			],
+			[
+				"dspcw",
+				"Processing\\dsp_cw_link_control.v"
+			],
+			[
+				"igm",
+				"VC707 HDMI interface\\igm_display.vhd"
+			],
+			[
+				"slave_sync_protocol",
+				"Processing\\Comms_and_PRBS\\slave_sync_protocol.vhd"
+			],
+			[
+				"comms_andprb",
+				"Processing\\Comms_and_PRBS\\comms_and_prbs_wrapper.vhd"
+			],
+			[
+				"gpio_wrapper",
+				"GPIO\\GPIO_wrapper.vhd"
+			],
+			[
+				"toplev",
+				"top_level.vhd"
+			],
+			[
+				"fmcwtim",
+				"fmcw_time_transfer_1.m"
+			],
+			[
+				"scopv",
+				"fpga\\rtl\\red_pitaya_scope.v"
+			],
+			[
+				"utili",
+				"Python\\data_utilities.py"
+			],
+			[
+				"virt",
+				"Python\\virtex7_internal_bus.py"
+			],
+			[
+				"slave",
+				"src\\Processing\\Comms_and_PRBS\\slave_sync_protocol.vhd"
+			],
+			[
+				"master_sync_protocol",
+				"src\\Processing\\Comms_and_PRBS\\master_sync_protocol.vhd"
+			],
+			[
+				"comms_and_prbs_receiver",
+				"src\\Processing\\Comms_and_PRBS\\comms_and_prbs_receiver.vhd"
+			],
+			[
+				"commas",
+				"src\\Processing\\Comms_and_PRBS\\comms_and_prbs_wrapper.vhd"
+			],
+			[
+				"sysclk",
+				"src\\Clocking\\sysclk_wrapper.vhd"
+			],
+			[
+				"pro",
+				"src\\Processing\\processing_wrapper.v"
+			],
+			[
+				"top",
+				"VC707_HDMI_interface_test4.srcs\\sources_1\\VC707 HDMI interface\\top_level.vhd"
+			],
+			[
+				"laod",
+				"VC707_HDMI_interface_test4.srcs\\sources_1\\VC707 HDMI interface\\load_data_from_file.vhd"
+			],
+			[
+				"topvhd",
+				"VC707_HDMI_interface_test4.srcs\\sources_1\\VC707 HDMI interface\\top_level.vhd"
+			],
+			[
+				"dualtest",
+				"VC707_HDMI_interface_test4.srcs\\sources_1\\VC707 HDMI interface\\simple_dualport_ram_testbench.vhd"
+			],
+			[
+				"dual",
+				"VC707_HDMI_interface_test4.srcs\\sources_1\\VC707 HDMI interface\\simple_dualport_ram.vhd"
+			],
+			[
+				"sys",
+				"VC707_HDMI_interface_test4.srcs\\sources_1\\Clocking\\sysclk_wrapper.vhd"
+			],
+			[
+				"seri",
+				"VC707_HDMI_interface_test4.srcs\\sources_1\\VC707 HDMI interface\\HDMI_ADV7511_serial_controller.vhd"
+			],
+			[
+				"debugadv",
+				"tests_debug_adv7511.m"
+			],
+			[
+				"clock",
+				"VC707_HDMI_interface_test4.srcs\\sources_1\\Clocking\\sysclk_wrapper.vhd"
+			],
+			[
+				"superlav",
+				"SuperLaserLand.v"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 271.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
