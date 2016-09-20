@@ -1,0 +1,1 @@
+cat /opt/red_pitaya_top.bit > /dev/xdevcfg

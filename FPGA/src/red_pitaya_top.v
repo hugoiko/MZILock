@@ -169,6 +169,14 @@ assign ps_sys_ack   = |(sys_cs & sys_ack);
 
 // unused system bus slave ports
 
+assign sys_rdata[1*32+:32] = 32'h0; 
+assign sys_err  [1       ] =  1'b0;
+assign sys_ack  [1       ] =  1'b1;
+
+assign sys_rdata[2*32+:32] = 32'h0; 
+assign sys_err  [2       ] =  1'b0;
+assign sys_ack  [2       ] =  1'b1;
+
 assign sys_rdata[5*32+:32] = 32'h0; 
 assign sys_err  [5       ] =  1'b0;
 assign sys_ack  [5       ] =  1'b1;
@@ -317,14 +325,11 @@ ODDR oddr_dac_dat [14-1:0] (.Q(dac_dat_o), .D1(dac_dat_b), .D2(dac_dat_a), .C(da
 //  Digital-PLL module (2 inputs, 2 outputs)
 wire signed [15:0] ADCraw0, ADCraw1;
 wire signed [15:0] DACout0, DACout1;
-wire [16-1:0] LoggerData;
-wire LoggerData_clk_enable;
-wire LoggerIsWriting;
 
 assign ADCraw0 = {adc_a, 2'b0};
 assign ADCraw1 = {adc_b, 2'b0};
 assign dac_a = DACout0[16-1:2];   // converts 16 bits DACout to 14 bits for dac_a
-//assign dac_b = DACout1[16-1:2];   // converts 16 bits DACout to 14 bits for dac_b
+assign dac_b = DACout1[16-1:2];   // converts 16 bits DACout to 14 bits for dac_b
 
 wire dpll_rst = 1'b0; // I don't know if we can use the RedPitaya's reset because I don't know if it is clock-synchronous or not. In any case, it does not matter because we have the sys_bus driven resets.
 
@@ -340,11 +345,6 @@ dpll_wrapper dpll_wrapper_inst (
   .DACout0                 (  DACout0                    ),
   .DACout1                 (  DACout1                    ),
 
-  // Data logger port:
-  .LoggerData              (  LoggerData                 ),
-  .LoggerData_clk_enable   (  LoggerData_clk_enable      ),
-  .LoggerIsWriting         (  LoggerIsWriting            ),
-
   // System bus
   .sys_addr                (  sys_addr                   ),  // address
   .sys_wdata               (  sys_wdata                  ),  // write data
@@ -357,101 +357,6 @@ dpll_wrapper dpll_wrapper_inst (
 
 );
 
-// // ---------------------------------------------------------------------------------
-// // For testing the N-times clk FIR filter:
-// reg signed [16-1:0] fir_test_data;
-
-// N_times_clk_FIR_wrapper N_times_clk_FIR_wrapper_inst (
-//   // these two clocks need to be phase-locked to have a common edge (0 phase difference at the rising edges of clk_times_1)
-//   .clk_times_1    (  adc_clk        ),
-//   .clk_times_N    (  adc_clk_2x     ),
-  
-//   // these two signals are on the clk_times_1 clock domain
-//   .data_in        (  fir_test_data  ),
-//   .data_out       (  LoggerData     )
-
-//   );
-// assign LoggerData_clk_enable = 1'b1;
-
-// always @(posedge adc_clk)
-// begin
-//   if (LoggerIsWriting) begin
-//     fir_test_data <= 16'd1000;
-//   end
-//   else begin
-//     fir_test_data <= 16'd0;
-//   end
-// end
-
-//---------------------------------------------------------------------------------
-// BRAM-based data logger, replaces the Red Pitaya oscilloscope application, but has much simpler behavior:
-// The write port is directly controlled by the DPLL module, while the reads happen through the Zynq sys_bus
-
-// // for testing independently of the DPLL module:
-// assign LoggerData = adc_a;
-// assign LoggerData_clk_enable = 1'b1;
-
-ram_data_logger ram_data_logger_i (
-  .clk                  (  adc_clk                    ),
-  
-  // data input interface
-  .data_in              (  LoggerData                 ),
-  .data_in_clk_enable   (  LoggerData_clk_enable      ),
-  // control interface
-  .is_writing           (  LoggerIsWriting            ),
-  
-  // CPU interface
-  .sys_addr             (  sys_addr                   ),  // address
-  .sys_wdata            (  sys_wdata                  ),  // write data
-  .sys_sel              (  sys_sel                    ),  // write byte select
-  .sys_wen              (  sys_wen[1]                 ),  // write enable
-  .sys_ren              (  sys_ren[1]                 ),  // read enable
-  .sys_rdata            (  sys_rdata[ 1*32+31: 1*32]  ),  // read data
-  .sys_err              (  sys_err[1]                 ),  // error indicator
-  .sys_ack              (  sys_ack[1]                 )   // acknowledge signal
-
-
-  );
-
-
-//---------------------------------------------------------------------------------
-//  Internal VCO for testing purposes:
-wire signed [16-1:0] vco_cosine_out;
-wire signed [16-1:0] vco_sine_out;
-
-reg  signed [48-1:0] vco_frequency;
-
-always @(posedge adc_clk)
-begin
-  // gain was determined to mimick ~3e8 Hz/V of VCO gain, using:
-  // log2(3e8/(125e6/2^48 * 2^15/1))
-  // offset is equal to dec2bin(20e6/100e6 * 2^48, 48)
-  vco_frequency <= ($signed(DACout0)<<<34) + $signed(48'b001100110011001100110011001100110011001100110011);
-end
-
-internal_vco internal_vco_i (
-
-  .clk             (  adc_clk                    ),
-
-  // frequency in counts: analog frequency is equal to: frequency/2^48*clock frequency (currently 125 MHz)
-  .frequency       (  vco_frequency              ),
-
-   // System bus, address starts at 0x4X20_0000
-  .sys_addr        (  sys_addr                   ),  // address
-  .sys_wdata       (  sys_wdata                  ),  // write data
-  .sys_sel         (  sys_sel                    ),  // write byte select
-  .sys_wen         (  sys_wen[2]                 ),  // write enable
-  .sys_ren         (  sys_ren[2]                 ),  // read enable
-  .sys_rdata       (  sys_rdata[ 2*32+31: 2*32]  ),  // read data
-  .sys_err         (  sys_err[2]                 ),  // error indicator
-  .sys_ack         (  sys_ack[2]                 ),  // acknowledge signal
-
-
-  .cosine_out      (  vco_cosine_out             ),
-  .sine_out        (  vco_sine_out               )
-
-  );
-assign dac_b = vco_cosine_out[16-1:2];
 
 //---------------------------------------------------------------------------------
 //  House Keeping
