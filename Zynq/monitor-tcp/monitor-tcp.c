@@ -57,6 +57,8 @@
 #define LISTEN_PORT 5000
 #define MAX_BUFF_SIZE 1024
 
+#define VERBOSE_LEVEL 1
+
 static bool app_exit = false;
 pid_t parent_pid;
 
@@ -86,6 +88,27 @@ typedef struct binary_packet_read_buffer_t {
 	uint32_t start_address;
 	uint32_t number_of_points;	
 } binary_packet_read_buffer_t;
+
+uint32_t magic_bytes_read_uint32_buffer = 0xABCD1335;
+typedef struct binary_packet_read_uint32_buffer_t {
+	uint32_t magic_bytes;	// 0xABCD1335
+	uint32_t start_address;
+	uint32_t number_of_points;	
+} binary_packet_read_uint32_buffer_t;
+
+
+uint32_t magic_bytes_flank_servo = 0xABCD1236;
+typedef struct binary_packet_flank_servo_t {
+	uint32_t magic_bytes;	// 0xABCD1236
+	uint16_t iStopAfterZC;
+	int16_t ramp_minimum;
+	uint32_t number_of_ramps;
+	uint32_t number_of_steps;
+	uint32_t max_iterations;
+	int16_t threshold_int16;
+	double ki;
+
+} binary_packet_flank_servo_t;
 
 uint32_t magic_bytes_write_file = 0xABCD1237;
 typedef struct binary_packet_write_file_t {
@@ -191,9 +214,295 @@ void write_value(unsigned long a_addr, int a_type, unsigned long a_value) {
 // Stuff for the data acquisition:
 #include "monitor-tcp.h"
 
+#define XFER_BUFFER_SIZE 1024
+uint32_t xfer_buffer[XFER_BUFFER_SIZE];
 
-#define DATA_BUFFER_SIZE 1024UL
-uint32_t data_buffer[DATA_BUFFER_SIZE];
+// should be equal to 2^ADDRESS_WIDTH generic in ram_data_logger.vhd
+#define LOGGER_BUFFER_SIZE (1UL<<15)
+#define LOGGER_BASE_ADDR 0x00100000UL
+#define LOGGER_DATA_OFFSET  (1UL<<19)
+#define LOGGER_START_WRITE_OFFSET  0x1004UL
+
+int16_t data_buffer[LOGGER_BUFFER_SIZE];
+
+// this can be as long as we want (as long as it fits in the Zynq's RAM)
+// currently sizeof(uint32_t)*(1UL<<20) = 4 MB
+#define NO_FIFO_LOGGER_BUFFER_SIZE (1U<<20)
+uint32_t data_buffer_no_fifo[NO_FIFO_LOGGER_BUFFER_SIZE];
+
+// 16e6 samples (64 MB)
+#define FIFO_LOGGER_BUFFER_SIZE (1U<<24)
+uint32_t data_buffer_with_fifo[FIFO_LOGGER_BUFFER_SIZE];
+
+void acq_LoggerStartWrite()
+{
+	// writing anything to this register triggers the writing in ram_data_logger.vhd
+	write_value(LOGGER_BASE_ADDR + LOGGER_START_WRITE_OFFSET, 'w', 0);
+}
+
+
+void acq_GetDataFromLogger(uint32_t* size, int16_t* buffer_in)
+{
+    *size = MIN(*size, LOGGER_BUFFER_SIZE);
+
+    const volatile uint32_t* raw_buffer = (uint32_t*)((char*)map_base + LOGGER_BASE_ADDR + LOGGER_DATA_OFFSET);
+    //const volatile uint32_t* raw_buffer = (uint32_t*)((char*)map_base + OSC_BASE_ADDR + OSC_CHB_OFFSET);
+
+    printf("acq_GetDataFromLogger: reading %u points, starting from address 0x%lX\n", *size, LOGGER_BASE_ADDR + LOGGER_DATA_OFFSET);
+
+    for (uint32_t i = 0; i < (*size); ++i) {
+        buffer_in[i] = (raw_buffer[i % LOGGER_BUFFER_SIZE]);
+    }
+    printf("buffer_in[0] = %hd\n", buffer_in[0]);
+}
+
+
+// based off acq_GetDataRawV2 in file acq_handler.c
+#define ADC_BUFFER_SIZE             (16*1024)
+
+//int16_t data_buffer2[ADC_BUFFER_SIZE];
+
+void acq_GetDataRawV2_CHA(uint32_t pos, uint32_t* size, int16_t* buffer_in)
+{
+    *size = MIN(*size, ADC_BUFFER_SIZE);
+
+    const volatile uint32_t* raw_buffer = (uint32_t*)((char*)map_base + OSC_BASE_ADDR + OSC_CHA_OFFSET);
+    //const volatile uint32_t* raw_buffer = (uint32_t*)((char*)map_base + OSC_BASE_ADDR + OSC_CHB_OFFSET);
+
+    for (uint32_t i = 0; i < (*size); ++i) {
+        buffer_in[i] = (raw_buffer[(pos + i) % ADC_BUFFER_SIZE]);
+    }
+
+}
+
+void acq_GetDataRawV2_CHB(uint32_t pos, uint32_t* size, int16_t* buffer)
+{
+    *size = MIN(*size, ADC_BUFFER_SIZE);
+
+    //const volatile uint32_t* raw_buffer = (uint32_t*)((char*)map_base + OSC_BASE_ADDR + OSC_CHA_OFFSET);
+    const volatile uint32_t* raw_buffer = (uint32_t*)((char*)map_base + OSC_BASE_ADDR + OSC_CHB_OFFSET);
+
+    for (uint32_t i = 0; i < (*size); ++i) {
+        buffer[i] = (raw_buffer[(pos + i) % ADC_BUFFER_SIZE]);
+    }
+    
+}
+
+void acq_MinimumSetup()
+{
+	// start an acquisition with the minimum amount of setup:
+	osc_control_t *osc_control = (osc_control_t*)((char*)map_base + OSC_BASE_ADDR);
+
+	// send a "write pointer reset" command: (it looks like it gets stuck after one acquisition otherwise, but I can't figure out why by reading the fpga code)
+	osc_control->conf = 2;
+	
+	// set trigger source to software:
+	osc_control->trig_source = 1;
+	// send an "arm" command:
+	osc_control->conf = 1;
+	// send a software trigger (I think that this second write is necessary but I am not sure):
+	//usleep(1000);
+	osc_control->trig_source = 1;
+
+	// wait for the ram to fill (this could be done much better by probing a write pointer or some other register...):
+	osc_control->trigger_delay = 16*1024;	// I think that this is essentially the number of samples to write after receiving the trigger.
+	usleep(1000);
+	//usleep(10000);
+
+	// set arm = 0 so that the FPGA stops writing to the RAM while we read it out
+	//osc_control->conf = 0;
+
+	// data should be ready to be read out
+
+}
+
+void read_write_loop_minimum()
+{
+	double buf;
+	const volatile uint32_t* virt_addr_read = (uint32_t*)((char*)map_base + OSC_BASE_ADDR + 0x00094);
+	void* virt_addr_write = (void*)((char*)map_base + 0x500000);
+	//volatile uint32_t* raw_buffer_write = (uint32_t*)((char*)map_base + OSC_BASE_ADDR + 0x00094);
+
+    struct timespec time_start, time_end;
+    clock_gettime(CLOCK_REALTIME, &time_start);
+    // stuff to be timed would go here
+
+    //unsigned short a_value = 1;
+
+	double val_min, val_max;
+	val_min = 16e3*10.;
+	val_max = -val_min;
+
+    printf("entering read_write_loop_minimum()\n");
+
+	for (int k=0; k<100000; k++)
+	{
+		buf = (double) (int16_t) (*virt_addr_read & 0xFFFF);	// the 16 LSBs contain channel A, while the LSBs contain channel B, both sign-extended from 14 bits to 16 bits
+		if (buf < val_min)
+			val_min = buf;
+		if (buf > val_max)
+			val_max = buf;
+		if (buf > 1e3)
+			*((unsigned long *) virt_addr_write) = (long int) (int16_t) -2e3;
+		else
+			*((unsigned long *) virt_addr_write) = (long int) (int16_t) 2e3;
+		//*((unsigned long *) virt_addr_write) = (long int) (int16_t) -1.0 * buf;	// for now this is just a pass-through
+	}
+
+    clock_gettime(CLOCK_REALTIME, &time_end);
+    printf("read_write_loop_minimum(), elapsed = %d seconds + %ld ms\n", (int)(time_end.tv_sec-time_start.tv_sec), (long int)(time_end.tv_nsec-time_start.tv_nsec)/1000000);
+
+    printf("val_min = %f, val_max = %f", val_min, val_max);
+}
+
+
+void absorption_flank_servo(int connfd, uint16_t iStopAfterZC, int16_t ramp_minimum, uint32_t number_of_ramps, uint32_t number_of_steps,
+							uint32_t max_iterations, int16_t threshold_int16, double ki)
+{
+	printf("absorption_flank_servo(): iStopAfterZC = %u, ramp_minimum = %d, number_of_ramps = %u, number_of_steps = %u,\nmax_iterations = %u, threshold_int16 = %d, ki = %f\n", 
+		iStopAfterZC, ramp_minimum, number_of_ramps, number_of_steps,
+		max_iterations, threshold_int16, ki
+		);
+	fflush(stdout);
+
+	const volatile uint32_t* virt_addr_read = (uint32_t*)((char*)map_base + OSC_BASE_ADDR + 0x00094);
+	unsigned long* virt_addr_write = (unsigned long*)((char*)map_base + 0x500000);
+
+	printf("sizeof(unsigned long int) = %u\n", sizeof(unsigned long int));
+	printf("sizeof(unsigned int) = %u\n", sizeof(unsigned int));
+	printf("sizeof(double) = %u\n", sizeof(double));
+
+
+	int16_t * RAM_buffer = calloc((number_of_ramps*number_of_steps+max_iterations)*2, sizeof(int16_t));
+	if (!RAM_buffer)
+	{
+		printf("Error, unable to allocate %u bytes for the ram buffer. exiting...\n", (number_of_ramps*number_of_steps+max_iterations)*2*sizeof(int16_t));
+		return;
+	}
+
+	uint32_t k, k2, kOut = 0;
+	int16_t ramp_output = 0;
+	int16_t dac_output, adc_input;
+	uint32_t current_sign, last_sign;
+
+
+	for (k =0; k< number_of_ramps; k++)
+	{
+		// this inner loop does a single ramp
+		// current_sign = 1;
+		// last_sign = 1;
+		ramp_output = ramp_minimum;
+		dac_output = ramp_output;
+		// set dac
+		//*((unsigned long *) virt_addr_write) = (long int) (int16_t) dac_output;
+		*virt_addr_write = (long int) (int16_t) dac_output;
+		// wait for output to settle
+		printf("start of ramp\n");
+		fflush(stdout);
+		usleep(1000);	// argument is in microseconds
+		for (k2 =0; k2<number_of_steps; k2++)
+		{
+			// read adc
+			//printf("before adc read\n");
+			adc_input = (int16_t) (*virt_addr_read & 0xFFFF);	// the 16 LSBs contain channel A, while the LSBs contain channel B, both sign-extended from 14 bits to 16 bits
+			//printf("after adc read\n");
+			// set dac
+			//*((unsigned long *) virt_addr_write) = (long int) (int16_t) dac_output;
+			dac_output = ramp_output;
+			*virt_addr_write = (long int) (int16_t) dac_output;
+			// increment ramp output for next step
+			ramp_output++;
+			
+			// put both values in RAM to be sent to the PC
+			RAM_buffer[kOut++] = adc_input;
+			RAM_buffer[kOut++] = dac_output;
+			//printf("end of loop\n");
+			// check threshold crossing
+			current_sign = (adc_input > threshold_int16 ? 1 : 0);
+			if (k2 == 0) last_sign = current_sign;
+			if (current_sign != last_sign)
+			{
+				// we just crossed threshold, either positive or negative crossing AND we are at the last ramp
+				if (iStopAfterZC && k == number_of_ramps-1)
+					goto run_control_loop;
+			}
+
+			last_sign = current_sign;
+
+		}
+	}
+
+	// if we get here, that means that we didn't find the zero crossing condition or weren't told to look for it (iStopAfterZC == 0)
+	if (iStopAfterZC)
+		printf("finished looping without finding zero crossing.\n");
+	else
+		printf("finished looping, skipping control loop since iStopAfterZC = 0\n");
+	goto skip_control_loop;
+
+run_control_loop:
+	printf("Running control loop for %u iterations (0 means infinite).\n", max_iterations);
+
+	uint32_t kIterations = 0;
+	double current_error = 0., integrator_state = 0., delta_t = 1.0;
+	while (kIterations < max_iterations || max_iterations==0)
+	{
+		// read adc value
+		adc_input = (int16_t) (*virt_addr_read & 0xFFFF);	// the 16 LSBs contain channel A, while the LSBs contain channel B, both sign-extended from 14 bits to 16 bits
+		// compute error
+		current_error = (double) (threshold_int16 - adc_input);
+		// compute output value (integrate)
+		delta_t = 1.0;	// TODO: get actual timer value to compute delta_t
+		integrator_state += ki * current_error * delta_t;
+		// saturate integrator state, TODO: should change to anti-windup behavior (and saturate at the dac_output instead of at the integrator state)
+		if (integrator_state > 8191.)
+			integrator_state = 8191.;
+		if (integrator_state < -8192.)
+			integrator_state = -8192.;
+		// set dac value
+		dac_output = integrator_state + ramp_output;
+		*virt_addr_write = (long int) (int16_t) dac_output;
+
+		// put both values in RAM to be sent to the PC later
+		if (max_iterations != 0)
+		{
+			RAM_buffer[kOut++] = adc_input;
+			RAM_buffer[kOut++] = dac_output;
+		}
+
+		if (app_exit)
+		{
+			printf("quit signal detected. quitting loop.\n");
+			fflush(stdout);
+			break;
+		}
+		kIterations++;
+	}
+skip_control_loop:
+
+
+	// send contents of the ram buffer through the tcp connection:
+	printf("Sending RAM buffer...\n");
+	//int16_t * RAM_buffer = calloc(number_of_ramps*number_of_steps*2, sizeof(int16_t));
+	if (!app_exit)
+		send(connfd, RAM_buffer, (size_t)(number_of_ramps*number_of_steps+max_iterations)*2*sizeof(int16_t), 0);
+	printf("after send()\n");
+	// for now: dump out the RAM_buffer:
+	// printf("Dumping RAM buffer...\n");
+	// kOut = 0;
+	// for (k =0; k< number_of_ramps; k++)
+	// {
+	// 	for (k2 =0; k2<number_of_steps; k2++)
+	// 	{
+	// 		printf("%d, %d, ", RAM_buffer[kOut], RAM_buffer[kOut+1]);
+	// 		kOut++;
+	// 		kOut++;
+	// 	}
+
+	// }
+	// printf("\n");
+
+
+}
 
 
 /////////////////////////////////////////////////////
@@ -229,6 +538,139 @@ static void installTermSignalHandler()
 }
 
 
+void continuous_fifo_read(  )
+{
+	uint32_t iChunk, iOut;
+    const volatile uint32_t* fifo_buffer = (uint32_t*)((char*)map_base + 4*0x00039U);
+
+    // start the reading process by setting a few registers:
+    write_value(FPGA_MEMORY_START + 0x42*4, 'w', 1);	//    assert fifo synchronous reset (and also resets max_fifo_count)
+    write_value(FPGA_MEMORY_START + 0x42*4, 'w', 0);	// de-assert fifo synchronous reset
+    write_value(FPGA_MEMORY_START + 0x41*4, 'w', 1);	// bWritesEnabled = 1
+
+
+    // Read the fifo as quickly as we can
+    iOut = 0;
+    while (iOut < FIFO_LOGGER_BUFFER_SIZE) {
+    	// wait until fifo is not empty
+    	while (read_value(FPGA_MEMORY_START + 0x38*4)) ;
+    	// "not empty" in this case means at least 10 samples in the fifo
+    	for (iChunk=0; iChunk<10; iChunk++)
+        	data_buffer_with_fifo[iOut++] = (*fifo_buffer);
+    }
+    write_value(FPGA_MEMORY_START + 0x41*4, 'w', 1);	// bWritesEnabled = 0
+
+    // what is max data count for fifo?
+    uint32_t max_fifo_count = read_value(FPGA_MEMORY_START + 0x40*4);
+
+    // show results, first few points of the buffer:
+    for (iOut=0; iOut<50; iOut++)
+    	printf("%u, ", data_buffer_with_fifo[iOut]);
+    printf("\n");
+
+    printf("max_fifo_count = %u\n", max_fifo_count);
+
+	return;
+}
+
+void throughput_test(  )
+{
+	int32_t current_delta;
+    int32_t min_delta_counter, max_delta_counter, total_delta_counter;
+    uint32_t number_of_counts_above_threshold = 0;
+
+    min_delta_counter = 0x7fffffff;	// hex(2^31-1)
+    max_delta_counter = 0;
+    printf("throughput_test\n");
+    printf("min_delta_counter at start = %d, max_delta_counter = %d\n", min_delta_counter, max_delta_counter);
+
+
+    const volatile uint32_t* raw_buffer = (uint32_t*)((char*)map_base + 4*0x00037U);
+
+    // Read a buffer as quickly as we can
+    uint32_t i;
+    for (i = 0; i < NO_FIFO_LOGGER_BUFFER_SIZE; ++i) {
+        data_buffer_no_fifo[i] = (*raw_buffer);
+    }
+    
+    // count min, max and average counter steps:
+	for (i = 1; i < NO_FIFO_LOGGER_BUFFER_SIZE; ++i)
+	{
+		// compute delta
+		current_delta = (int32_t)data_buffer_no_fifo[i] - (int32_t)data_buffer_no_fifo[i-1];
+
+		// show first 50 pts:
+		if (i<250)
+			printf("%d, ", current_delta);
+
+
+		// how many above a certain threshold? set at 2* mean
+		if (current_delta > 40)
+			number_of_counts_above_threshold++;
+
+		// running min
+		if (current_delta < min_delta_counter)
+			min_delta_counter = current_delta;
+		// running max
+		if (current_delta > max_delta_counter)
+			max_delta_counter = current_delta;
+	}
+	total_delta_counter = (int32_t)data_buffer_no_fifo[NO_FIFO_LOGGER_BUFFER_SIZE-1] - (int32_t)data_buffer_no_fifo[0];
+
+	printf("\n");
+	printf("total delta = %d counts, avg = %d counts\n", total_delta_counter, total_delta_counter / NO_FIFO_LOGGER_BUFFER_SIZE);
+	printf("min_delta_counter = %d counts, max_delta_counter = %d counts\n", min_delta_counter, max_delta_counter);
+	printf("number_of_counts_above_threshold = %d\n", number_of_counts_above_threshold);
+
+	return;
+}
+
+
+void *second_thread_function( void *ptr )
+{
+	// we want to run for ~10 seconds:
+	// a loop of: reading an FPGA register, sleeping for 1 us, counting the time taken
+	// compute and show min max time over this 10 secs period.
+    struct timespec time_start, time_start_of_all, time_end;
+    
+    long int min_in_ns, max_in_ns, current_in_ns;
+
+    min_in_ns = 1000000000;
+    max_in_ns = 0;
+
+	uint32_t cumul = 0;
+
+	clock_gettime(CLOCK_REALTIME, &time_start_of_all);
+
+	printf("hi, we are starting thread 2, time = %ld", (long int) time_start_of_all.tv_sec);
+
+	int k = 0;
+
+	while (1)
+	{
+		clock_gettime(CLOCK_REALTIME, &time_start);
+		// todo: read fpga register.
+		cumul = cumul + read_value(0x40000000);
+		//usleep(1); // argument is in microseconds
+		clock_gettime(CLOCK_REALTIME, &time_end);
+		current_in_ns = 1000000000L * (long int)(time_end.tv_sec-time_start.tv_sec) + (long int)(time_end.tv_nsec-time_start.tv_nsec);
+		if (current_in_ns < min_in_ns)
+			min_in_ns = current_in_ns;
+		if (current_in_ns > max_in_ns)
+			max_in_ns = current_in_ns;
+		if (time_end.tv_sec - time_start_of_all.tv_sec >= 10)
+			break;
+		//printf("in loop, %ld = ", (long int) time_start.tv_sec);
+		if (k >= 1000000)
+			break;
+		k++;
+	}
+
+	printf("cumul = %d\n", cumul);
+	printf("min_in_ns = %ld ns, max_in_ns = %ld\n", min_in_ns, max_in_ns);
+
+	return NULL;
+}
 
 
 /**
@@ -303,17 +745,17 @@ static int handleConnection(int connfd) {
             message_len *= 2;
             if (msg_end+read_size > message_len)
             {
-            	printf("msg_end+read_size > message_len\n");
+            	if (VERBOSE_LEVEL>=2) printf("msg_end+read_size > message_len\n");
             	message_len = msg_end+read_size;
             }
             message_buff = realloc(message_buff, message_len);
-            printf("reallocated message_buf to size %u. new address = 0x%x\n", (uint)message_len, (uint)message_buff);
+            if (VERBOSE_LEVEL>=2) printf("reallocated message_buf to size %u. new address = 0x%x\n", (uint)message_len, (uint)message_buff);
         }
 
         // Copy read buffer into message buffer
         memcpy(message_buff + msg_end, buffer, read_size);
         msg_end += read_size;
-        printf("msg_end = %u\n", (uint32_t)msg_end);
+        if (VERBOSE_LEVEL>=2) printf("msg_end = %u\n", (uint32_t)msg_end);
 
         while (msg_end >= iRequiredBytes)
         {
@@ -323,10 +765,10 @@ static int handleConnection(int connfd) {
 	        	if (msg_end >= sizeof(message_magic_bytes))
 	        	{
 					// we can read the packet 'header', or magic bytes:
-					printf("buffer is long enough to parse out magic bytes at least.\n");
+					if (VERBOSE_LEVEL>=2) printf("buffer is long enough to parse out magic bytes at least.\n");
 		        	// check the packet "header"
 		        	message_magic_bytes = *((uint32_t*)&message_buff[0]);
-		        	printf("message_magic_bytes = 0x%X\n", message_magic_bytes);
+		        	if (VERBOSE_LEVEL>=2) printf("message_magic_bytes = 0x%X\n", message_magic_bytes);
 		        	bHaveMagicBytes = true;
 	        	}
 	        }
@@ -345,10 +787,10 @@ static int handleConnection(int connfd) {
 		        		pPacketWriteReg = (binary_packet_write_reg_t*) message_buff;
 
 
-		        		printf("Received a register write packet.\n");
-		        		printf("message_write_address = 0x%X (hex)\n", pPacketWriteReg->write_address);
-		        		printf("message_write_value = %u (decimal)\n", pPacketWriteReg->write_value);
-		        		fflush(stdout);
+		        		if (VERBOSE_LEVEL>=2) printf("Received a register write packet.\n");
+		        		if (VERBOSE_LEVEL>=2) printf("message_write_address = 0x%X (hex)\n", pPacketWriteReg->write_address);
+		        		if (VERBOSE_LEVEL>=2) printf("message_write_value = %u (decimal)\n", pPacketWriteReg->write_value);
+		        		if (VERBOSE_LEVEL>=2) fflush(stdout);
 
 		        		// perform the actual memory write:
 		        		write_value(pPacketWriteReg->write_address, 'w', pPacketWriteReg->write_value);
@@ -373,9 +815,9 @@ static int handleConnection(int connfd) {
 
 
 
-		        		printf("Received a register read packet.\n");
-		        		printf("pPacketReadReg->start_address = 0x%X (hex)\n", pPacketReadReg->start_address);
-		        		printf("pPacketReadReg->reserved = %u (decimal) (currently unused)\n", pPacketReadReg->reserved);
+		        		if (VERBOSE_LEVEL>=2) printf("Received a register read packet.\n");
+		        		if (VERBOSE_LEVEL>=2) printf("pPacketReadReg->start_address = 0x%X (hex)\n", pPacketReadReg->start_address);
+		        		if (VERBOSE_LEVEL>=2) printf("pPacketReadReg->reserved = %u (decimal) (currently unused)\n", pPacketReadReg->reserved);
 
 		        		// perform actual memory read, dump 32 bits value into TCP socket.
 		        		uint32_t register_value;
@@ -383,7 +825,7 @@ static int handleConnection(int connfd) {
 
 		        		// send it back:
 		        		send(connfd, &register_value, sizeof(register_value), 0);
-		        		printf("register sent. addr = 0x%X, value = %u\n", pPacketReadReg->start_address, register_value);
+		        		if (VERBOSE_LEVEL>=2) printf("register sent. addr = 0x%X, value = %u\n", pPacketReadReg->start_address, register_value);
 
 		        		// reset our message parsing state variables
 		        		bytes_consumed = sizeof(binary_packet_read_reg_t);
@@ -394,8 +836,52 @@ static int handleConnection(int connfd) {
 		        		printf("Received a register read packet, but we have not received the full packet yet.\n");
 
 		        	}
+
+
 	        	////////////////////////////////////////////////////////////
 	        	// Read a data block
+	        	} else if (message_magic_bytes == magic_bytes_read_uint32_buffer) {
+
+	        		iRequiredBytes = sizeof(binary_packet_read_uint32_buffer_t);
+	        		if (msg_end >= iRequiredBytes) {
+		        		
+		        		struct binary_packet_read_uint32_buffer_t * pPacketReadUint32Buffer;
+		        		pPacketReadUint32Buffer = (binary_packet_read_uint32_buffer_t*) message_buff;
+
+
+		        		if (VERBOSE_LEVEL>=2) printf("Received a uint32_t buffer read packet.\n");
+		        		if (VERBOSE_LEVEL>=2) printf("pPacketReadUint32Buffer->start_address = 0x%X (hex)\n", pPacketReadUint32Buffer->start_address);
+		        		if (VERBOSE_LEVEL>=2) printf("pPacketReadUint32Buffer->number_of_points = %u (decimal)\n", pPacketReadUint32Buffer->number_of_points);
+
+		        		uint32_t buffer_read_size = MIN(pPacketReadUint32Buffer->number_of_points, XFER_BUFFER_SIZE);
+
+		        		//const volatile uint32_t* ptr_fpga_buffer = (uint32_t*)((char*)map_base + pPacketReadUint32Buffer->start_address);
+		        		// memcpy((void*)xfer_buffer, (const void*)ptr_fpga_buffer, (size_t)buffer_read_size*sizeof(uint32_t));
+
+		        		uint32_t a_addr;
+		        		void* virt_addr;
+						for (uint32_t i = 0; i < buffer_read_size; ++i) {
+							a_addr = pPacketReadUint32Buffer->start_address + 4*i;
+					    	virt_addr = map_base + (a_addr & MAP_MASK);
+					        xfer_buffer[i] = *((uint32_t *) virt_addr);
+					    }
+
+
+		        		send(connfd, xfer_buffer, (size_t)buffer_read_size*sizeof(uint32_t), 0);
+
+		        		if (VERBOSE_LEVEL>=2) printf("Done transferring uint32 buffer.\n");
+
+		        		// reset our message parsing state variables
+		        		bytes_consumed = sizeof(binary_packet_read_uint32_buffer_t);
+		        		bHaveMagicBytes = false;
+		        		iRequiredBytes = sizeof(message_magic_bytes);
+	        		} else {
+	        			if (VERBOSE_LEVEL>=2) printf("Received a buffer read packet, but we have not received the full packet yet.\n");
+
+	        		}
+
+	        	////////////////////////////////////////////////////////////
+	        	// Read a buffer of continuous value from an ADC input
 	        	} else if (message_magic_bytes == magic_bytes_read_buffer) {
 
 	        		iRequiredBytes = sizeof(binary_packet_read_buffer_t);
@@ -405,17 +891,42 @@ static int handleConnection(int connfd) {
 		        		pPacketReadBuffer = (binary_packet_read_buffer_t*) message_buff;
 
 
+
 		        		printf("Received a buffer read packet.\n");
 		        		printf("pPacketReadBuffer->start_address = 0x%X (hex) (currently unused)\n", pPacketReadBuffer->start_address);
 		        		printf("pPacketReadBuffer->number_of_points = %u (decimal)\n", pPacketReadBuffer->number_of_points);
 
-		        		uint32_t buffer_read_size = MIN(pPacketReadBuffer->number_of_points, DATA_BUFFER_SIZE);
-						for (uint32_t i = 0; i < buffer_read_size; ++i) {
-							data_buffer[i] = read_value(pPacketReadBuffer->start_address+i*sizeof(uint32_t));
-						}
+		        		// do an acquisition
+		        		// printf("running acquisition...\n");
+					    struct timespec time_start, time_end;
+					    // clock_gettime(CLOCK_REALTIME, &time_start);
+					    // stuff to be timed would go here
 
-		        		send(connfd, data_buffer, (size_t)buffer_read_size*sizeof(uint32_t), 0);
+		        		//acq_MinimumSetup();
+		        		//acq_LoggerStartWrite();
+					    // clock_gettime(CLOCK_REALTIME, &time_end);
+					    // printf("acq_MinimumSetup(), elapsed = %d seconds + %ld ms\n", (int)(time_end.tv_sec-time_start.tv_sec), (long int)(time_end.tv_nsec-time_start.tv_nsec)/1000000);
 
+		        		// this should contain the actual data, note that the writing has surely wrapped and the start/end of the data run will be random in the dataset
+		        		// TODO: sync with the end of the acquisition in the buffer.
+		        		clock_gettime(CLOCK_REALTIME, &time_start);
+		        		uint32_t acq_size = MIN(LOGGER_BUFFER_SIZE, pPacketReadBuffer->number_of_points);
+		        		// printf("acquisition completed, grabbing %u points....\n", acq_size);
+		        		//acq_GetDataRawV2_CHA(0, &acq_size, data_buffer);
+		        		acq_GetDataFromLogger(&acq_size, data_buffer);
+					    clock_gettime(CLOCK_REALTIME, &time_end);
+					    printf("getdata elapsed = %d seconds + %ld ns\n", (int)(time_end.tv_sec-time_start.tv_sec), (long int)(time_end.tv_nsec-time_start.tv_nsec));
+		        		// for (int k=100; k<140; k++)
+		        		// 	printf("%d, ", data_buffer[k]);
+		        		// printf("\n");
+
+		        		// dump this into the TCP socket:
+		        		// printf("before socket send()\n");
+		        		clock_gettime(CLOCK_REALTIME, &time_start);
+		        		send(connfd, data_buffer, (size_t)acq_size*sizeof(int16_t), 0);
+					    clock_gettime(CLOCK_REALTIME, &time_end);
+					    printf("send() elapsed = %d seconds + %ld ns\n", (int)(time_end.tv_sec-time_start.tv_sec), (long int)(time_end.tv_nsec-time_start.tv_nsec));
+		        		printf("socket send() complete\n");
 
 
 		        		// reset our message parsing state variables
@@ -426,6 +937,30 @@ static int handleConnection(int connfd) {
 	        			printf("Received a buffer read packet, but we have not received the full packet yet.\n");
 
 	        		}
+
+	        	// ////////////////////////////////////////////////////////////
+	        	// // Run a software control loop (integrator only) to lock a laser on the flank of an absorption line
+	        	// } else if (message_magic_bytes == magic_bytes_flank_servo)
+	        	// {
+	        	// 	iRequiredBytes = sizeof(binary_packet_flank_servo_t);
+		        // 	if (msg_end >= iRequiredBytes) {
+		        // 		struct binary_packet_flank_servo_t * pPacketFlankServo;
+		        // 		pPacketFlankServo = (binary_packet_flank_servo_t*) message_buff;
+		        // 		absorption_flank_servo(	connfd,
+		        // 								pPacketFlankServo->iStopAfterZC, 
+		        // 								pPacketFlankServo->ramp_minimum, 
+		        // 								pPacketFlankServo->number_of_ramps, 
+		        // 								pPacketFlankServo->number_of_steps,
+		        // 								pPacketFlankServo->max_iterations,
+		        // 								pPacketFlankServo->threshold_int16,
+		        // 								pPacketFlankServo->ki );
+		        // 		// reset our message parsing state variables
+		        // 		bytes_consumed = sizeof(binary_packet_flank_servo_t);
+		        // 		bHaveMagicBytes = false;
+		        // 		iRequiredBytes = sizeof(message_magic_bytes);
+		        // 	} else {
+		        // 		printf("Received a 'start flank servo' packet, but we have not received the full packet yet.\n");
+		        // 	}
 
 	        	////////////////////////////////////////////////////////////
 	        	// Write a file to the filesystem
@@ -629,9 +1164,9 @@ static int handleConnection(int connfd) {
 	    		if (msg_end < bytes_consumed)
 	    		{
 	    			bytes_consumed = 0;
-	    			printf("Assert error: msg_end < bytes_consumed, msg_end = %u, bytes_consumed = %u\n", (uint32_t)msg_end, (uint32_t)bytes_consumed);
+	    			if (VERBOSE_LEVEL>=2) printf("Assert error: msg_end < bytes_consumed, msg_end = %u, bytes_consumed = %u\n", (uint32_t)msg_end, (uint32_t)bytes_consumed);
 	    		} else {
-	        		printf("consumed %u bytes from the buffer.\n", (uint32_t)bytes_consumed);
+	        		if (VERBOSE_LEVEL>=2) printf("consumed %u bytes from the buffer.\n", (uint32_t)bytes_consumed);
 		        	msg_end -= bytes_consumed;
 		        	char *m = message_buff + bytes_consumed;
 			        if (message_buff != m && msg_end > 0) {
@@ -836,3 +1371,7 @@ int main(int argc, char *argv[])
 
     return (EXIT_SUCCESS);
 }
+
+
+
+

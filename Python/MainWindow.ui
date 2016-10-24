@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1400</width>
+    <height>900</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>UNICORN</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="sizeConstraint">
+     <enum>QLayout::SetDefaultConstraint</enum>
+    </property>
+    <property name="margin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QMdiArea" name="mdiArea">
+      <property name="viewMode">
+       <enum>QMdiArea::SubWindowView</enum>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1400</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuConnection">
+    <property name="title">
+     <string>File</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+    <addaction name="actionDocumentation"/>
+   </widget>
+   <widget class="QMenu" name="menuWindows">
+    <property name="title">
+     <string>Windows</string>
+    </property>
+    <addaction name="actionSerialConnection"/>
+    <addaction name="actionConsole"/>
+    <addaction name="separator"/>
+    <addaction name="actionDynamicScripts"/>
+    <addaction name="separator"/>
+    <addaction name="actionDSPControl"/>
+    <addaction name="actionUDPControl"/>
+    <addaction name="separator"/>
+    <addaction name="actionADCControl"/>
+    <addaction name="actionDACControl"/>
+    <addaction name="actionDDSControl_A"/>
+    <addaction name="actionDDSControl_B"/>
+    <addaction name="separator"/>
+    <addaction name="actionFrontendFilters0"/>
+    <addaction name="actionIGMScope0"/>
+    <addaction name="actionFrontendFilters1"/>
+    <addaction name="actionIGMScope1"/>
+    <addaction name="separator"/>
+    <addaction name="actionComms"/>
+    <addaction name="actionBackend"/>
+    <addaction name="actionSelfTest"/>
+    <addaction name="actionDSPAlgorithms"/>
+    <addaction name="separator"/>
+    <addaction name="actionDataAcquisition"/>
+   </widget>
+   <addaction name="menuConnection"/>
+   <addaction name="menuWindows"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="actionDocumentation">
+   <property name="text">
+    <string>Documentation</string>
+   </property>
+  </action>
+  <action name="actionMatched_Filter">
+   <property name="text">
+    <string>Matched Filter</string>
+   </property>
+  </action>
+  <action name="actionEquation">
+   <property name="text">
+    <string>Equation</string>
+   </property>
+  </action>
+  <action name="actionADCControl">
+   <property name="text">
+    <string>ADC Control</string>
+   </property>
+  </action>
+  <action name="actionDACControl">
+   <property name="text">
+    <string>DAC Control</string>
+   </property>
+  </action>
+  <action name="actionDDSControl_A">
+   <property name="text">
+    <string>DDS Control A</string>
+   </property>
+  </action>
+  <action name="actionDDSControl_B">
+   <property name="text">
+    <string>DDS Control B</string>
+   </property>
+  </action>
+  <action name="actionSerialConnection">
+   <property name="text">
+    <string>Serial Connection</string>
+   </property>
+  </action>
+  <action name="actionDSPControl">
+   <property name="text">
+    <string>DSP Boot Control</string>
+   </property>
+  </action>
+  <action name="actionUDPControl">
+   <property name="text">
+    <string>UDP Control</string>
+   </property>
+  </action>
+  <action name="actionDynamicScripts">
+   <property name="text">
+    <string>Dynamic Scripts</string>
+   </property>
+  </action>
+  <action name="actionFrontendFilters0">
+   <property name="text">
+    <string>Frontend Filters 0</string>
+   </property>
+  </action>
+  <action name="actionIGMScope0">
+   <property name="text">
+    <string>IGM Scope 0</string>
+   </property>
+  </action>
+  <action name="actionFrontendFilters1">
+   <property name="text">
+    <string>Frontend Filters 1</string>
+   </property>
+  </action>
+  <action name="actionIGMScope1">
+   <property name="text">
+    <string>IGM Scope 1</string>
+   </property>
+  </action>
+  <action name="actionComms">
+   <property name="text">
+    <string>Comms and PRBS</string>
+   </property>
+  </action>
+  <action name="actionFeedbackCtrl0">
+   <property name="text">
+    <string>Feedback Controller 0</string>
+   </property>
+  </action>
+  <action name="actionFeedbackCtrl1">
+   <property name="text">
+    <string>Feedback Controller 1</string>
+   </property>
+  </action>
+  <action name="actionBackend">
+   <property name="text">
+    <string>Backend</string>
+   </property>
+  </action>
+  <action name="actionSelfTest">
+   <property name="text">
+    <string>Self Test</string>
+   </property>
+  </action>
+  <action name="actionDataAcquisition">
+   <property name="text">
+    <string>Data Acquisition</string>
+   </property>
+  </action>
+  <action name="actionConsole">
+   <property name="text">
+    <string>Python Console</string>
+   </property>
+  </action>
+  <action name="actionDSPAlgorithms">
+   <property name="text">
+    <string>DSP Algorithms</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

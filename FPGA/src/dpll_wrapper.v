@@ -30,118 +30,236 @@ module dpll_wrapper (
 // Clock assigments
 
 wire clk;
-assign clk = clk1;
-
 wire clk_mult;
+assign clk      = clk1;
 assign clk_mult = clk1_timesN;
 
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Simple latency test
 
+reg signed [15:0] counter = 16'h0000;
+always @(posedge clk) begin
+    counter <= counter + 1;
+end
+assign DACout0 = {2'b00, counter[14], 13'b0000000000000};
+assign DACout1 = ADCraw0;
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Input registers
+
+reg signed [15:0] IQ_i_real = 16'h0000;
+reg signed [15:0] IQ_i_imag = 16'h0000;
+
+always @(posedge clk) begin
+    IQ_i_real <= $signed(ADCraw0);
+    IQ_i_imag <= $signed(ADCraw1);
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// IQ Correction
+
+wire signed [15:0] IQ_o_real;
+wire signed [15:0] IQ_o_imag;
+
+reg signed [31:0] Bvect1 = 32'h00000000; // 0
+reg signed [31:0] Bvect2 = 32'h00000000; // 0
+reg signed [31:0] Amat11 = 32'h00004000; // 1
+reg signed [31:0] Amat21 = 32'h00000000; // 0
+reg signed [31:0] Amat12 = 32'h00000000; // 0
+reg signed [31:0] Amat22 = 32'h00004000; // 1
+
+IQ_correction #(
+    .INPUT_WIDTH    (16             ),
+    .OUTPUT_WIDTH   (16             ),
+    .GAIN_WIDTH     (24             ),
+    .GAIN_WIDTH_FRAC(12             )
+) IQ_correction_instance (
+    .clk            (clk            ),
+    .IQ_i_real      (IQ_i_real      ),
+    .IQ_i_imag      (IQ_i_imag      ),
+    .Bvect1         (Bvect1[15:0]   ),
+    .Bvect2         (Bvect2[15:0]   ),
+    .Amat11         (Amat11[23:0]   ),
+    .Amat21         (Amat21[23:0]   ),
+    .Amat12         (Amat12[23:0]   ),
+    .Amat22         (Amat22[23:0]   ),
+    .IQ_o_real      (IQ_o_real      ),
+    .IQ_o_imag      (IQ_o_imag      )
+);
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Synthesis tests
+
+// reg [95:0] int_in = 96'h000000000000000000000001;
+// wire [95:0] int_out;
+
+// integrator_96s_dsp48
+// #(
+//     .DATA_WIDTH(96)
+// ) integrator_inst (
+//     .clk(clk),
+//     .ce(1'b1),
+//     .clr(1'b0),
+//     .limit_incr(1'b0),
+//     .limit_decr(1'b0),
+//     .data_input(int_in),
+//     .railed_hi(),
+//     .railed_lo(),
+//     .data_output(int_out)
+// );
+
+
+wire signed [31:0] quant_in;
+wire signed [31:0] quant_tmp0;
+wire signed [31:0] quant_tmp1;
+wire signed [31:0] quant_tmp2;
+wire signed [31:0] quant_out;
+
+assign quant_in = $signed(ADCraw0);
+
+switchable_lossless_quantifier
+#(
+	.DATA_WIDTH(32),
+	.RIGHT_SHIFT(1),
+	.QUANT_TYPE(2),
+	.REG_OUTPUT(0)
+) switchable_lossless_quantifier_inst0 (
+    .clk(clk),
+    .ce(1'b1),
+	.quantify(1'b1),
+	.rightshift(1'b1),
+	.data_input(quant_in),
+	.data_output(quant_tmp0)
+);
+
+switchable_lossless_quantifier
+#(
+	.DATA_WIDTH(32),
+	.RIGHT_SHIFT(1),
+	.QUANT_TYPE(2),
+	.REG_OUTPUT(0)
+) switchable_lossless_quantifier_inst1 (
+    .clk(clk),
+    .ce(1'b1),
+	.quantify(1'b1),
+	.rightshift(1'b1),
+	.data_input(quant_tmp0),
+	.data_output(quant_tmp1)
+);
+
+switchable_lossless_quantifier
+#(
+	.DATA_WIDTH(32),
+	.RIGHT_SHIFT(1),
+	.QUANT_TYPE(2),
+	.REG_OUTPUT(0)
+) switchable_lossless_quantifier_inst2 (
+    .clk(clk),
+    .ce(1'b1),
+	.quantify(1'b1),
+	.rightshift(1'b1),
+	.data_input(quant_tmp1),
+	.data_output(quant_out)
+);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // ADC RAM
 
-reg rawiq_acq_start = 1'b0;
+localparam IQ_RAM_ADDR_W = 10;
+
+reg rawiq_acq_start   = 1'b0;
 reg rawiq_acq_started = 1'b0;
 
-reg [9:0] addr_rawiq = 10'd0;
-reg clken_rawiq = 1'b0;
-reg wren_rawiq = 1'b0;
-reg [31:0] wdata_rawiq = 32'h00000000;
-
-wire        sys_clken_rawiq;
-wire        sys_ack_rawiq;
-wire [31:0] sys_rdata_rawiq;
-wire [9:0]  sys_addr_rawiq;
-
-assign sys_clken_rawiq    = (sys_ren || sys_wen) && (sys_addr[12+2-1:10+2] == 4'b0001);
-assign sys_addr_rawiq     = sys_addr[10-1+2:2];
-
-RAM_1W2R #(
-    .INIT_FILE  (""                 ),
-    .ADDR_BITS  (10                 ),
-    .DATA_BITS  (32                 )
-) rawiq_ram (
-    .clk        (clk                ),
-    .addr_a     (addr_rawiq         ),
-    .clken_a    (clken_rawiq        ),
-    .wren_a     (wren_rawiq         ),
-    .data_i_a   (wdata_rawiq        ),
-    .data_o_a   (                   ),
-    .uflag_a    (                   ),
-    .addr_b     (sys_addr_rawiq     ),
-    .clken_b    (sys_clken_rawiq    ),
-    .data_o_b   (sys_rdata_rawiq    ),
-    .uflag_b    (sys_ack_rawiq      )
-);
-
+reg [IQ_RAM_ADDR_W-1:0] iqram_addr  = {IQ_RAM_ADDR_W{1'b0}};
+reg                     iqram_wren  = 1'b0;
+reg [31:0]              iqram_wdata = 32'h00000000;
 
 
 always @(posedge clk) begin
 
-    wdata_rawiq <= {ADCraw1, ADCraw0};
+    iqram_wdata <= {IQ_o_real, IQ_o_imag};
 
     if ( rawiq_acq_started == 1'b0 ) begin
-        addr_rawiq  <= 10'd0;
+        iqram_addr  <= {IQ_RAM_ADDR_W{1'b0}};
         if (rawiq_acq_start) begin
             rawiq_acq_started <= 1'b1;
-            clken_rawiq <= 1'b1;
-            wren_rawiq  <= 1'b1;
+            iqram_wren  <= 1'b1;
         end else begin
             rawiq_acq_started <= 1'b0;
-            clken_rawiq <= 1'b0;
-            wren_rawiq  <= 1'b0;
+            iqram_wren  <= 1'b0;
         end
     end else begin
-        if (addr_rawiq < 10'b1111111111) begin
+        if (iqram_addr < {IQ_RAM_ADDR_W{1'b1}}) begin
             rawiq_acq_started <= 1'b1;
-            addr_rawiq <= addr_rawiq + 1;
-            clken_rawiq <= 1'b1;
-            wren_rawiq  <= 1'b1;
+            iqram_addr <= iqram_addr + 1;
+            iqram_wren  <= 1'b1;
         end else begin
             rawiq_acq_started <= 1'b0;
-            addr_rawiq  <= 10'd0;
-            clken_rawiq <= 1'b0;
-            wren_rawiq  <= 1'b0;
+            iqram_addr  <= {IQ_RAM_ADDR_W{1'b0}};
+            iqram_wren  <= 1'b0;
         end
     end
-    
 end
 
 
+wire        iqram_clken;
+wire        iqram_ack;
+wire [31:0] iqram_rdata;
+
+assign iqram_clken    = (sys_ren || sys_wen) && (sys_addr[19:12] == 8'h01);
+
+RAM_1W2R #(
+    .INIT_FILE  (""                 ),
+    .ADDR_BITS  (IQ_RAM_ADDR_W ),
+    .DATA_BITS  (32                 )
+) iq_ram (
+    .clk        (clk                ),
+    .addr_a     (iqram_addr         ),
+    .clken_a    (iqram_wren         ),
+    .wren_a     (iqram_wren         ),
+    .data_i_a   (iqram_wdata        ),
+    .data_o_a   (                   ),
+    .uflag_a    (                   ),
+    .addr_b     (sys_addr[11:2]     ),
+    .clken_b    (iqram_clken        ),
+    .data_o_b   (iqram_rdata        ),
+    .uflag_b    (iqram_ack          )
+);
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// Control registers + Readback RAM
+// Control registers with write and read access. Write access is implemented with a process
+// while read access uses a RAM.
 
-wire        sys_clken_rrr;
-wire        sys_ack_rrr;
-wire [31:0] sys_rdata_rrr;
-wire [9:0]  sys_addr_rrr;
-wire        sys_wen_rrr;
-wire [31:0] sys_wdata_rrr;
+wire        rbram_clken;
+wire        rbram_ack;
+wire [31:0] rbram_rdata;
 
-assign sys_clken_rrr    = (sys_ren || sys_wen) && (sys_addr[12+2-1:10+2] == 4'b0000);
-assign sys_addr_rrr     = sys_addr[10-1+2:2];
-assign sys_wen_rrr      = sys_wen;
-assign sys_wdata_rrr    = sys_wdata;
+
+assign rbram_clken    = (sys_ren | sys_wen) & (sys_addr[19:12] == 8'h00);
 
 RAM_1W2R #(
     .INIT_FILE  (""                 ),
     .ADDR_BITS  (10                 ),
     .DATA_BITS  (32                 )
-) register_readback_ram (
+) readback_ram (
     .clk        (clk                ),
-    .addr_a     (sys_addr_rrr       ),
-    .clken_a    (sys_clken_rrr      ),
-    .data_o_a   (sys_rdata_rrr      ),
-    .uflag_a    (sys_ack_rrr        ),
-    .wren_a     (sys_wen_rrr        ),
-    .data_i_a   (sys_wdata_rrr      ),
+    .addr_a     (sys_addr[11:2]     ),
+    .clken_a    (rbram_clken        ),
+    .data_o_a   (rbram_rdata        ),
+    .uflag_a    (rbram_ack          ),
+    .wren_a     (sys_wen            ),
+    .data_i_a   (sys_wdata          ),
     .addr_b     (10'b0000000000     ),
     .clken_b    (1'b0               ),
     .data_o_b   (                   ),
     .uflag_b    (                   )
 );
-
+ 
 
 always @(posedge clk) begin
 
@@ -150,18 +268,48 @@ always @(posedge clk) begin
     // if (rst) begin
     //     // Reset values
     // end 
-    if (sys_clken_rrr && sys_wen_rrr) begin
+    if (sys_wen) begin
         // Write
-        if (sys_addr_rrr[9:0]==10'h0c) rawiq_acq_start <= sys_wdata_rrr[0];
+
+        if (sys_addr[19:0]==20'h00040) Bvect1 <= sys_wdata[31:0];
+        if (sys_addr[19:0]==20'h00044) Bvect2 <= sys_wdata[31:0];
+        if (sys_addr[19:0]==20'h00048) Amat11 <= sys_wdata[31:0];
+        if (sys_addr[19:0]==20'h0004C) Amat21 <= sys_wdata[31:0];
+        if (sys_addr[19:0]==20'h00050) Amat12 <= sys_wdata[31:0];
+        if (sys_addr[19:0]==20'h00054) Amat22 <= sys_wdata[31:0];
+
+        if (sys_addr[19:0]==20'h0007C) rawiq_acq_start <= sys_wdata[0];
+
+        //if (sys_addr[19:0]==20'h00100) int_in[31:0] <= sys_wdata[31:0];
     end
+end
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Status registers
+
+reg sta_ack;
+reg [31:0] sta_rdata;
+wire sta_en;
+
+assign sta_en = sys_wen | sys_ren;
+
+always @(posedge clk) begin
+
+    casez (sys_addr[19:0])
+        20'h0307C: begin sta_ack <= sta_en;  sta_rdata <= {{31{1'b0}}, rawiq_acq_started}; end
+        20'h03100: begin sta_ack <= sta_en;  sta_rdata <= quant_out[31:0];                 end
+        default:   begin sta_ack <= sta_en;  sta_rdata <= 32'h0;                           end
+    endcase
+
 end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // System Bus
 
 assign sys_err      = 1'b0;
-assign sys_rdata    = sys_rdata_rrr |  sys_rdata_rawiq;
-assign sys_ack      = sys_ack_rrr   || sys_ack_rawiq   || sys_wen;
+assign sys_rdata    = sta_rdata | rbram_rdata | iqram_rdata;
+assign sys_ack      = sta_ack   | rbram_ack   | iqram_ack;
 
 endmodule
 

@@ -10,31 +10,42 @@ import matplotlib.pyplot as plt
 
 class RedPitayaDevice():
 
-    MAGIC_BYTES_WRITE_REG       = 0xABCD1233
-    MAGIC_BYTES_READ_REG        = 0xABCD1234
-    MAGIC_BYTES_READ_BUFFER     = 0xABCD1235
+    MAGIC_BYTES_WRITE_REG           = 0xABCD1233
+    MAGIC_BYTES_READ_REG            = 0xABCD1234
+    MAGIC_BYTES_READ_BUFFER         = 0xABCD1235
+    MAGIC_BYTES_READ_UINT32_BUFFER  = 0xABCD1335
     
-    MAGIC_BYTES_WRITE_FILE      = 0xABCD1237
-    MAGIC_BYTES_SHELL_COMMAND   = 0xABCD1238
-    MAGIC_BYTES_REBOOT_MONITOR  = 0xABCD1239
+    MAGIC_BYTES_WRITE_FILE          = 0xABCD1237
+    MAGIC_BYTES_SHELL_COMMAND       = 0xABCD1238
+    MAGIC_BYTES_REBOOT_MONITOR      = 0xABCD1239
     
-    FPGA_BASE_ADDR              = 0x40000000
+    FPGA_BASE_ADDR                  = 0x40000000
 
-    MAX_SAMPLES_READ_BUFFER     = 1024
+    MAX_SAMPLES_READ_UINT32_BUFFER  = 1024
 
 
     def __init__(self):
-        pass
+        self.bConnected = False
 
     def OpenTCPConnection(self, HOST, PORT=5000):
         self.HOST = HOST
         self.PORT = PORT
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setblocking(1)
-        self.sock.connect((self.HOST, self.PORT))
+        # Disable the Nagle Algorithm (TCP_NODELAY). 
+        # Seems to improve real time performance but increases the total number of TCP packets
+        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        try:
+            self.sock.connect((self.HOST, self.PORT))
+            self.bConnected = True
+        except socket.error, value:
+            self.bConnected = False
+            return value
 
     def CloseTCPConnection(self):
+        self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
+        self.bConnected = False
 
     # from http://stupidpythonideas.blogspot.ca/2013/05/sockets-are-byte-streams-not-message.html
     def recvall(self, count):
@@ -148,11 +159,11 @@ class RedPitayaDevice():
             raise ValueError("Zynq buffer read address 0x%08X is not a multiple of 4." % (self.FPGA_BASE_ADDR+address_uint32))
         if number_of_chars % 4:
             raise ValueError("Zynq buffer read length in bytes %d is not a multiple of 4." % number_of_chars)
-        if number_of_chars > 4*self.MAX_SAMPLES_READ_BUFFER:
-            raise ValueError("Zynq buffer read length exceeeds maximum: %d > %d bytes." % (number_of_chars, 4*self.MAX_SAMPLES_READ_BUFFER))
+        if number_of_chars > 4*self.MAX_SAMPLES_READ_UINT32_BUFFER:
+            raise ValueError("Zynq buffer read length exceeeds maximum: %d > %d bytes." % (number_of_chars, 4*self.MAX_SAMPLES_READ_UINT32_BUFFER))
 
         number_of_uint32 = number_of_chars/4
-        packet_to_send = struct.pack('=III', self.MAGIC_BYTES_READ_BUFFER, self.FPGA_BASE_ADDR+address_uint32, number_of_uint32)    # last value is reserved
+        packet_to_send = struct.pack('=III', self.MAGIC_BYTES_READ_UINT32_BUFFER, self.FPGA_BASE_ADDR+address_uint32, number_of_uint32)    # last value is reserved
         self.sock.sendall(packet_to_send)
         data_buffer = self.recvall(number_of_chars)
         return data_buffer
@@ -180,17 +191,20 @@ def main():
     dev = RedPitayaDevice()
     dev.OpenTCPConnection("192.168.0.101")
     
-    dev.write_Zynq_register_int32(0x00030, 1)
+    #dev.write_Zynq_register_int32(0x0007C, 1)
     #for i in range(1024):
     #    dev.write_Zynq_register_int32(i*4,i)
     #rp.write_Zynq_register_int32(0x00000,143246)
     #rp.write_Zynq_register_int32(0x00FFC,143246)
-    #ret = rp.read_Zynq_register_int32(0x00FFC)
-    ret = dev.read_Zynq_buffer_int16(0x01000, 2048)
+    #ret = dev.read_Zynq_register_int32(0x01000)
+    #print(ret)
+    #ret = dev.read_Zynq_register_int32(0x01004)
+    #print(ret)
+    ret = dev.read_Zynq_buffer_int16(0x00000, 2048)
     print(ret)
-    
     plt.plot(ret[0::2])
     plt.plot(ret[1::2])
+    plt.show()
     
     dev.CloseTCPConnection()
 

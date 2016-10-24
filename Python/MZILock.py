@@ -15,6 +15,8 @@ import winsound
 from initialConfiguration import initialConfiguration
 from RedPitayaDevice import RedPitayaDevice
 
+from DeviceAssociations import *
+
 import time
 import socket
 
@@ -22,13 +24,7 @@ import socket
 def main():
 
     # Specify the mapping between the MAC addresses (which are used as a form of serial numbers) and the box data
-    devices_data = {}
-    devices_data['00:26:32:f0:16:dc'] = {'color': '#1CC981',
-                        'name': 'Red Pitaya 1',
-                        'shorthand': 'RP 1',
-                        'config file': 'system_parameters_RP_1.xml',
-                        #'port': 60002
-                        }
+
 
     dev = RedPitayaDevice()
 

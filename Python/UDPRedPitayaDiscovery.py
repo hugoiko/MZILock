@@ -18,37 +18,51 @@ import time
 class UDPRedPitayaDiscovery():
     
     #def __init__(self, broadcast_address="255.255.255.255", port_number=1952):
-    def __init__(self, broadcast_address="192.168.1.255", port_number=1952):
+    def __init__(self, broadcast_address="255.255.255.255", port_number=1952):
         self.port_number = port_number
         self.broadcast_address = broadcast_address
         self.sock_conn = None
         self.sock_server = None
         
-        self.bVerbose = False
+        self.bVerbose = True
         
-        self.startListening()
+        #self.startListening()
+
+
+    # def __del__(self):
+    #     print("Calling destructor")
+    #     self.stopListening()
         
     def startListening(self):
         # Initialization:
-        print('Creating client socket...')
-        self.sock_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock_client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.connectClientSocket()
-        
-        print('Creating server socket...')
+        if self.bVerbose:
+            print('Creating server socket...')
         HOST_LOCALHOST = ''       # means local host
         self.sock_server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock_server.setblocking(0)
         self.sock_server.bind((HOST_LOCALHOST, self.port_number+1))
         # no need to call listen() since this is UDP
-        
-    def connectClientSocket(self):
-        self.sock_client.connect((self.broadcast_address, self.port_number))
 
+    def stopListening(self):
+        if self.sock_server is not None:
+            self.sock_server.shutdown(socket.SHUT_RDWR)
+            self.sock_server.close()
+        
+        
     def send_broadcast(self):
+        if self.bVerbose:
+            print('Creating client socket...')
+        self.sock_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock_client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.sock_client.connect((self.broadcast_address, self.port_number))
         # send a broadcast packet:
         self.sock_client.send("")
+
+        if self.bVerbose:
+            print('Closing client socket...')
+        self.sock_client.shutdown(socket.SHUT_RDWR)
+        self.sock_client.close()
         
     def check_answers(self):
         # is there any data ?
@@ -86,7 +100,7 @@ class UDPRedPitayaDiscovery():
             
 def main():
 #    disc = UDPRedPitayaDiscovery("192.168.137.255")
-    disc = UDPRedPitayaDiscovery("192.168.2.255")
+    disc = UDPRedPitayaDiscovery("192.168.0.255")
     disc.run_for_N_seconds(10)
 #    disc.send_broadcast()
 #    time.sleep(0.1)
