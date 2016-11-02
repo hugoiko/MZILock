@@ -178,12 +178,12 @@ class MainWindow(QtGui.QMainWindow):
         self.change_mdi_color(self.defaultColor)
 
 
-        ################################################################
-        ## Data Loop timer
-        timerPeriod_secs = 0.001
-        self.timer = QtCore.QTimer(self)
-        self.timer.timeout.connect(self.data_loop)
-        self.timer.start(round(1000*timerPeriod_secs))
+        # ################################################################
+        # ## Data Loop timer
+        # timerPeriod_secs = 0.001
+        # self.timer = QtCore.QTimer(self)
+        # self.timer.timeout.connect(self.data_loop)
+        # self.timer.start(round(1000*timerPeriod_secs))
 
      
     ################################################################
@@ -222,12 +222,12 @@ class MainWindow(QtGui.QMainWindow):
             self.dev.CloseTCPConnection()
         self.UDPDiscovery.stopListening()
         
-    ################################################################
-    ## Data Loop
-    def data_loop(self):
-        if not self.dev.bConnected:
-            return
-        self.calc.data_loop()
+    # ################################################################
+    # ## Data Loop
+    # def data_loop(self):
+    #     if not self.dev.bConnected:
+    #         return
+    #     self.calc.data_loop()
 
 
 

@@ -120,10 +120,14 @@ class MZILockLiveCalc:
         self.IQ_cal_Amat22 = int(round((self.UNITY_GAIN)*A[1,1]/4.0))
 
     def data_loop(self):
-
-        acq_started = self.dev.read_Zynq_register_uint32(0x0307C)
-        if bool(acq_started):
+        
+        if not self.dev.bConnected:
             return
+
+        if bool(self.dev.read_Zynq_register_uint32(0x0307C)):
+            return
+        #while bool(self.dev.read_Zynq_register_uint32(0x0307C)):
+            #time.sleep(0.001)
 
         Npoints = 1024
 
@@ -142,11 +146,17 @@ class MZILockLiveCalc:
 
         Nfinal = Npoints#(Npoints/2/self.TEMP)
 
-        self.spectrum = numpy.absolute(numpy.fft.fft(self.IQ_o_angle*(2.0*numpy.pi/4294967296.0), Npoints))**2
-        self.spectrum = self.spectrum[0:Nfinal]
+        self.spectrum_new = numpy.absolute(numpy.fft.fft(self.IQ_o_angle*(2.0*numpy.pi/4294967296.0), Npoints))**2
+        self.spectrum_new = self.spectrum_new[0:Nfinal]
         self.freq_axis = float(self.FS)*numpy.arange(Nfinal).astype(numpy.double)/float(Npoints*self.DECIM)
-        self.spectrum = (1.0/float(Npoints)) * self.spectrum * (((numpy.pi*float(self.FILT)*self.freq_axis/float(self.FS)) / numpy.sin((numpy.pi*self.FILT*self.freq_axis/self.FS)))**2.0)
+        self.spectrum_new = (1.0/float(Npoints)) * self.spectrum_new * (((numpy.pi*float(self.FILT)*self.freq_axis/float(self.FS)) / numpy.sin((numpy.pi*self.FILT*self.freq_axis/self.FS)))**2.0)
 
+
+        if self.isReady:
+            alph = 0.2
+            self.spectrum = self.spectrum_new * alph + (1-alph)*self.spectrum 
+        else:
+            self.spectrum = self.spectrum_new
 
         #print(self.spectrum)
         #print(self.freq_axis)
@@ -161,6 +171,8 @@ class MZILockLiveCalc:
                 self.compute_IQ_cal_from_sums()
 
         # Start new acquisition
+        #for i in range(20):
         self.dev.write_Zynq_register_uint32(0x0007C, 0x1)
+            #time.sleep(0.001)
 
         self.isReady = True

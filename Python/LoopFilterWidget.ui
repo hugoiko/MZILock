@@ -6,77 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>431</width>
-    <height>354</height>
+    <width>498</width>
+    <height>560</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Loop Filter</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="5">
-    <widget class="QPushButton" name="checkDitherEnabled">
-     <property name="text">
-      <string>Dither Enabled</string>
-     </property>
-     <property name="checkable">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="7">
-    <widget class="QLabel" name="label_7">
-     <property name="text">
-      <string>Amplitude</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="8">
-    <widget class="QLineEdit" name="editDitherAmpli"/>
-   </item>
-   <item row="0" column="8">
-    <widget class="QLineEdit" name="editDitherPeriod"/>
-   </item>
-   <item row="8" column="0" colspan="9">
-    <widget class="QwtPlot" name="qwtPlot">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>200</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="7">
-    <widget class="QLabel" name="label_6">
-     <property name="text">
-      <string>Period</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="3">
-    <widget class="QLineEdit" name="editGainI"/>
-   </item>
-   <item row="0" column="3">
-    <widget class="QLineEdit" name="editGainP"/>
-   </item>
-   <item row="2" column="3">
-    <widget class="QLineEdit" name="editGainII"/>
-   </item>
-   <item row="5" column="3">
-    <widget class="QLineEdit" name="editGainFD"/>
-   </item>
-   <item row="1" column="1">
-    <widget class="QPushButton" name="buttonClearIntegrators">
-     <property name="text">
-      <string>Clear Integrators</string>
-     </property>
-     <property name="checkable">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
+   <item row="0" column="0">
     <widget class="QPushButton" name="checkLockEnabled">
      <property name="text">
       <string>Lock Enabled</string>
@@ -86,7 +30,94 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="2">
+   <item row="0" column="1">
+    <widget class="QCheckBox" name="checkBranchEnabledP">
+     <property name="text">
+      <string>K_p</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2">
+    <widget class="QLineEdit" name="editGainP"/>
+   </item>
+   <item row="0" column="4" colspan="2">
+    <widget class="QPushButton" name="checkDitherEnabled">
+     <property name="text">
+      <string>Dither Enabled</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QPushButton" name="buttonClearIntegrators">
+     <property name="text">
+      <string>Clear Integrators</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QCheckBox" name="checkBranchEnabledI">
+     <property name="text">
+      <string>K_i</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QLineEdit" name="editGainI"/>
+   </item>
+   <item row="1" column="4">
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>Amplitude</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="5">
+    <widget class="QLineEdit" name="editDitherAmpli"/>
+   </item>
+   <item row="2" column="1">
+    <widget class="QCheckBox" name="checkBranchEnabledII">
+     <property name="text">
+      <string>K_ii</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QLineEdit" name="editGainII"/>
+   </item>
+   <item row="2" column="4">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>Period</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="5">
+    <widget class="QLineEdit" name="editDitherPeriod"/>
+   </item>
+   <item row="3" column="1">
+    <widget class="QCheckBox" name="checkBranchEnabledD">
+     <property name="text">
+      <string>K_d</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="2">
+    <widget class="QLineEdit" name="editGainD"/>
+   </item>
+   <item row="4" column="0">
+    <widget class="QCheckBox" name="checkFlipPlotSign">
+     <property name="text">
+      <string>Flip Plot Sign</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
     <widget class="QLabel" name="label_5">
      <property name="text">
       <string>d filter</string>
@@ -94,35 +125,50 @@
     </widget>
    </item>
    <item row="4" column="2">
-    <widget class="QCheckBox" name="checkBranchEnabledD">
-     <property name="text">
-      <string>K_d</string>
+    <widget class="QLineEdit" name="editGainFD"/>
+   </item>
+   <item row="5" column="0" colspan="6">
+    <widget class="QwtPlot" name="graph">
+     <property name="minimumSize">
+      <size>
+       <width>480</width>
+       <height>320</height>
+      </size>
      </property>
     </widget>
    </item>
-   <item row="0" column="2">
-    <widget class="QCheckBox" name="checkBranchEnabledP">
-     <property name="text">
-      <string>K_p</string>
+   <item row="0" column="3" rowspan="5">
+    <widget class="QPlainTextEdit" name="textInfo">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>80</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>Lucida Console</family>
+      </font>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+     <property name="plainText">
+      <string/>
      </property>
     </widget>
-   </item>
-   <item row="1" column="2">
-    <widget class="QCheckBox" name="checkBranchEnabledI">
-     <property name="text">
-      <string>K_i</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="2">
-    <widget class="QCheckBox" name="checkBranchEnabledII">
-     <property name="text">
-      <string>K_ii</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="3">
-    <widget class="QLineEdit" name="editGainD"/>
    </item>
   </layout>
  </widget>

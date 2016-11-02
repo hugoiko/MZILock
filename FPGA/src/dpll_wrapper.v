@@ -136,7 +136,7 @@ reg         lf_branch_en_d      = 1'b1;
 reg         lf_branch_en_p      = 1'b1;
 reg         lf_branch_en_i      = 1'b1;
 reg         lf_branch_en_ii     = 1'b1;
-reg  [17:0] lf_coef_d_filt      = 18'd0;
+reg  [23:0] lf_coef_d_filt      = 18'd0;
 reg  [31:0] lf_cmd_in_d         = 32'h00000000;
 reg  [31:0] lf_cmd_in_p         = 32'h00000000;
 reg  [31:0] lf_cmd_in_i         = 32'h00000000;
@@ -341,16 +341,22 @@ end
 
 
 localparam IQ_RAM_ADDR_W = 10;
-reg acq_start   = 1'b0;
-reg acq_started = 1'b0;
+reg acq_start       = 1'b0;
+reg acq_start_synch = 1'b0;
+reg acq_started     = 1'b0;
 reg [IQ_RAM_ADDR_W-1:0] acqramX_addr  = {IQ_RAM_ADDR_W{1'b0}};
 reg                     acqramX_wren  = 1'b0;
 always @(posedge clk) begin
 
+    if (acq_start) begin
+        acq_start_synch <= 1'b1;
+    end
+
     if (acqramX_flag_tmp) begin
         if ( acq_started == 1'b0 ) begin
             acqramX_addr  <= {IQ_RAM_ADDR_W{1'b0}};
-            if (acq_start) begin
+            if (acq_start_synch) begin
+                acq_start_synch <= 1'b0;
                 acq_started <= 1'b1;
                 acqramX_wren  <= 1'b1;
             end else begin
@@ -514,7 +520,7 @@ always @(posedge clk) begin
 
         if (sys_addr[19:0]==20'h00080) lf_clr              <= sys_wdata[0];
         if (sys_addr[19:0]==20'h00084) lf_lock             <= sys_wdata[0];
-        if (sys_addr[19:0]==20'h00088) lf_coef_d_filt      <= sys_wdata[17:0];
+        if (sys_addr[19:0]==20'h00088) lf_coef_d_filt      <= sys_wdata[23:0];
         if (sys_addr[19:0]==20'h0008C) lf_cmd_in_d         <= sys_wdata[31:0];
         if (sys_addr[19:0]==20'h00090) lf_cmd_in_p         <= sys_wdata[31:0];
         if (sys_addr[19:0]==20'h00094) lf_cmd_in_i         <= sys_wdata[31:0];

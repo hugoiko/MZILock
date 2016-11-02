@@ -61,55 +61,67 @@ class VisualizationWidget(ControlWidget):
         self.curve2.attach(self.graphA)
         self.curve2.setData([], [])
 
+
+        self.gridA = Qwt5.QwtPlotGrid()
+        self.gridA.attach(self.graphA)
         self.graphA.replot()
         self.graphA.setAxisTitle(Qwt5.QwtPlot.xBottom, "I [V]")
-        self.graphA.setAxisScale(Qwt5.QwtPlot.xBottom, -32768, 32767)
+        #self.graphA.setAxisScale(Qwt5.QwtPlot.xBottom, -32768, 32767)
+        self.graphA.setAxisScale(Qwt5.QwtPlot.xBottom, -1, 1)
         self.graphA.setAxisTitle(Qwt5.QwtPlot.yLeft, "Q [V]")
-        self.graphA.setAxisScale(Qwt5.QwtPlot.yLeft, -32768, 32767)
-        self.graphA.setCanvasBackground(Qt.QColor(0,0,0))
+        #self.graphA.setAxisScale(Qwt5.QwtPlot.yLeft, -32768, 32767)
+        self.graphA.setAxisScale(Qwt5.QwtPlot.yLeft, -1, 1)
+        self.graphA.setCanvasBackground(Qt.QColor(32,32,32))
+
 
         self.curve3 = Qwt5.QwtPlotCurve("Angle")
         self.curve3.setPen(Qt.QColor(0, 255, 0))
         self.curve3.attach(self.graphB)
         self.curve3.setData([], [])
 
+        self.gridB = Qwt5.QwtPlotGrid()
+        self.gridB.attach(self.graphB)
         self.graphB.replot()
         self.graphB.setAxisTitle(Qwt5.QwtPlot.xBottom, "Time [s]")
         self.graphB.setAxisScale(Qwt5.QwtPlot.xBottom, 0, 1023)
         self.graphB.setAxisTitle(Qwt5.QwtPlot.yLeft, "Phase [rad]")
         self.graphB.setAxisScale(Qwt5.QwtPlot.yLeft, -numpy.pi, numpy.pi)
-        self.graphB.setCanvasBackground(Qt.QColor(0,0,0))
+        self.graphB.setCanvasBackground(Qt.QColor(32,32,32))
 
         self.curve4 = Qwt5.QwtPlotCurve("Loop Filter Output")
         self.curve4.setPen(Qt.QColor(0, 255, 0))
         self.curve4.attach(self.graphC)
         self.curve4.setData([], [])
 
+        self.gridC = Qwt5.QwtPlotGrid()
+        self.gridC.attach(self.graphC)
         self.graphC.replot()
         self.graphC.setAxisTitle(Qwt5.QwtPlot.xBottom, "Time [s]")
         self.graphC.setAxisScale(Qwt5.QwtPlot.xBottom, 0, 1023)
         self.graphC.setAxisTitle(Qwt5.QwtPlot.yLeft, "Output [V]")
-        self.graphC.setAxisScale(Qwt5.QwtPlot.yLeft, -32768, 32767)
-        self.graphC.setCanvasBackground(Qt.QColor(0,0,0))
+        #self.graphC.setAxisScale(Qwt5.QwtPlot.yLeft, -32768, 32767)
+        self.graphC.setCanvasBackground(Qt.QColor(32,32,32))
 
         self.curve5 = Qwt5.QwtPlotCurve("Spectrum")
         self.curve5.setPen(Qt.QColor(255, 255, 0))
         self.curve5.attach(self.graphD)
         self.curve5.setData([], [])
 
+        self.gridD = Qwt5.QwtPlotGrid()
+        self.gridD.attach(self.graphD)
         self.graphD.replot()
 
         self.graphD.setAxisTitle(Qwt5.QwtPlot.xBottom, "Frequency [Hz]")
         self.graphD.setAxisScaleEngine(Qwt5.QwtPlot.xBottom, Qwt5.QwtLog10ScaleEngine())
-        self.graphD.setAxisScale(Qwt5.QwtPlot.xBottom, 1e3, 1e6)
+        self.graphD.setAxisScale(Qwt5.QwtPlot.xBottom, 8e3, 1.5e6)
 
         self.graphD.setAxisTitle(Qwt5.QwtPlot.yLeft, "Magnitude [rad^2/Hz]")
         self.graphD.setAxisScaleEngine(Qwt5.QwtPlot.yLeft, Qwt5.QwtLog10ScaleEngine())
         self.graphD.setAxisScale(Qwt5.QwtPlot.yLeft, 1e-6, 1e2)
 
-        self.graphD.setCanvasBackground(Qt.QColor(0,0,0))
+        self.graphD.setCanvasBackground(Qt.QColor(32,32,32))
         
-        timerPeriod_secs = 0.005
+        timerPeriod_secs = 0.03
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
@@ -118,26 +130,28 @@ class VisualizationWidget(ControlWidget):
     def update(self):
 
 
-
+        self.calc.data_loop()
 
         if self.isEnabled() and self.dev.bConnected:
 
             if self.calc.isReady:            
             
-                self.curve1.setData(self.calc.IQ_i_real, self.calc.IQ_i_imag)
-                self.curve2.setData(self.calc.IQ_o_real, self.calc.IQ_o_imag)
+                self.curve1.setData(self.calc.IQ_i_real*(2.0/65536.0), self.calc.IQ_i_imag*(2.0/65536.0))
+                self.curve2.setData(self.calc.IQ_o_real*(2.0/65536.0), self.calc.IQ_o_imag*(2.0/65536.0))
                 self.graphA.replot()
     
                 self.curve3.setData(self.calc.time_axis, self.calc.IQ_o_angle*(2.0*numpy.pi/4294967296.0))
                 self.graphB.replot()
     
-                self.curve4.setData(self.calc.time_axis, self.calc.loop_filter)
+                self.curve4.setData(self.calc.time_axis, self.calc.loop_filter*(2.0/65536.0))
                 self.graphC.replot()
     
-                self.curve5.setData(self.calc.freq_axis, self.calc.spectrum)
+                self.curve5.setData(self.calc.freq_axis[1:], self.calc.spectrum[1:])
                 self.graphD.replot()
+
+                #print(self.calc.spectrum[0:4])
                 
-                self.editStd.setText("%.16f" % numpy.std(self.calc.IQ_o_angle*(2.0*numpy.pi/4294967296.0)))
+                self.editStd.setText("%.6f rad rms" % numpy.std(self.calc.IQ_o_angle*(2.0*numpy.pi/4294967296.0)))
 
 
     def update_content(self):

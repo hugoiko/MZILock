@@ -25,7 +25,7 @@ port (
     branch_en_i     : in  std_logic;
     branch_en_ii    : in  std_logic;
     
-    coef_d_filt     : in  std_logic_vector(17 downto 0);
+    coef_d_filt     : in  std_logic_vector(23 downto 0);
     cmd_in_d        : in  std_logic_vector(31 downto 0);
     cmd_in_p        : in  std_logic_vector(31 downto 0);
     cmd_in_i        : in  std_logic_vector(31 downto 0);
@@ -55,7 +55,7 @@ architecture Behavioral of MZILock_loop_filter_with_dither is
 
     signal clr_reg              : std_logic := '0';
     signal lock_reg             : std_logic := '0';
-    signal coef_d_filt_reg      : std_logic_vector(17 downto 0) := (others => '0');
+    signal coef_d_filt_reg      : std_logic_vector(23 downto 0) := (others => '0');
     signal branch_en_d_reg      : std_logic := '0';
     signal branch_en_p_reg      : std_logic := '0';
     signal branch_en_i_reg      : std_logic := '0';
@@ -79,6 +79,8 @@ architecture Behavioral of MZILock_loop_filter_with_dither is
     signal data_out_d  : std_logic_vector(OUTPUT_WIDTH-1 downto 0);
     signal railed_hi_d : std_logic;
     signal railed_lo_d : std_logic;
+    signal railed_hi_d2 : std_logic;
+    signal railed_lo_d2 : std_logic;
 
     signal data_out_d_TO_BE_FIXED : std_logic_vector(18-1 downto 0);
 
@@ -189,7 +191,7 @@ begin
     end generate;
 
     -- Input regs for the parameters
-    dither_input_regs : process (clk) is
+    input_registers_for_parameters : process (clk) is
     begin
         if rising_edge(clk) then
             if ce = '1' then
@@ -283,21 +285,19 @@ begin
         railed_lo  => railed_lo_d
     );
 
-    -- NEEDS FIXING
-
-    derivative_inst : entity work.differentiator_with_filter
+    derivative_inst : entity work.derivative_with_filter
     generic map (
-        N_DATA => OUTPUT_WIDTH
+        DATA_WIDTH => data_tmp_d'length,
+        COEF_WIDTH => coef_d_filt_reg'length
     ) port map (
-        clk      => clk,
-        ce       => '1',
-        coef     => coef_d_filt_reg,
-        data_in  => data_tmp_d,
-        data_out => data_out_d_TO_BE_FIXED
+        clk       => clk,
+        ce        => '1',
+        coef      => coef_d_filt_reg,
+        din       => data_tmp_d,
+        dout      => data_out_d,
+        railed_hi => railed_hi_d2,
+        railed_lo => railed_lo_d2
     );
-
-    data_out_d <= data_out_d_TO_BE_FIXED(18-1 downto 18-OUTPUT_WIDTH);
-    --data_out_d <= (others => '0');
 
     ----------------------------------------------------------------
     -- P Branch
@@ -358,41 +358,50 @@ begin
     );
 
     single_integrator : process (clk) is
-        variable var_railed_hi, var_railed_lo : std_logic;
-        variable var_next_sum_i : std_logic_vector(data_times_gain_i'range);
+
+        variable var_integ_input : std_logic_vector(data_times_gain_i'range) := (others => '0');
+        variable var_integ_value : std_logic_vector(data_times_gain_i'range) := (others => '0');
+        variable var_railed_hi : std_logic := '0';
+        variable var_railed_lo : std_logic := '0';
+        variable var_integ_next : std_logic_vector(data_times_gain_i'range) := (others => '0');
+
+        --variable var_railed_lo : std_logic := '0';
+        --variable var_railed_hi : std_logic := '0';
+        --variable var_next_sum_i : std_logic_vector(data_times_gain_i'range);
     begin
         if rising_edge(clk) then
             if ce = '1' then
-                safe_signed_add2(data_times_gain_i, current_sum_i, var_next_sum_i, var_railed_hi, var_railed_lo);
-                if (clr_reg = '1') then
-                    current_sum_i <= (others => '0');
+
+                if (clr_reg = '1' or branch_en_i_reg = '0') then
+                    var_integ_input := (others => '0');
+                    var_integ_value := (others => '0');
                 else
-                    current_sum_i <= var_next_sum_i;
+                    if (lock_reg = '1') then
+                        var_integ_input := data_times_gain_i; 
+                    else
+                        var_integ_input := (others => '0');
+                    end if;
+                    var_integ_value := current_sum_i;
                 end if;
+
+                safe_signed_add2(var_integ_input, var_integ_value, var_integ_next, var_railed_hi, var_railed_lo);
+
+                current_sum_i <= var_integ_next;
+
                 railed_hi_i2 <= var_railed_hi;
                 railed_lo_i2 <= var_railed_lo;
+
+                --safe_signed_add2(data_times_gain_i, current_sum_i, var_next_sum_i, var_railed_hi, var_railed_lo);
+                --if (clr_reg = '1' or branch_en_i_reg = '0') then
+                --    current_sum_i <= (others => '0');
+                --else
+                --    current_sum_i <= var_next_sum_i;
+                --end if;
+                --railed_hi_i2 <= var_railed_hi;
+                --railed_lo_i2 <= var_railed_lo;
             end if;
         end if;
     end process;
-
-    --sum_inst_i : entity work.signed_sum_with_saturation
-    --generic map (
-    --    DATA_WIDTH => OUTPUT_WIDTH,
-    --    REGISTER_OUTPUT => 1
-    --) port map (
-    --    clk       => clk,
-    --    ce        => '1',
-    --    a         => data_times_gain_i,
-    --    b         => data_out_i_switched,
-    --    c         => data_out_i,
-    --    railed_hi => railed_hi_i2,
-    --    railed_lo => railed_lo_i2
-    --);
-
-
-
-
-    --data_out_i_switched <= (others => '0') when (clr_reg = '1') else data_out_i;
 
     ----------------------------------------------------------------
     -- II Branch
@@ -441,7 +450,7 @@ begin
             if ce = '1' then
 
 
-                if (clr_reg = '1') then
+                if (clr_reg = '1' or branch_en_ii_reg = '0') then
                     var_integ_input_A := (others => '0');
                     var_integ_value_A := (others => '0');
                     var_integ_input_B := (others => '0');
@@ -452,11 +461,19 @@ begin
                         var_integ_input_A := (others => '0');
                         var_integ_value_A := (others => '0');
                     else
-                        var_integ_input_A := data_times_gain_ii;
-                        var_integ_value_A := var_integ_next_A;
+                        if (lock_reg = '1') then
+                            var_integ_input_A := data_times_gain_ii;
+                        else
+                            var_integ_input_A := (others => '0');
+                        end if;
+                        var_integ_value_A := current_sum_ii_A;
                     end if;
-                    var_integ_input_B := var_integ_next_A;
-                    var_integ_value_B := var_integ_next_B;
+                    if (lock_reg = '1') then
+                        var_integ_input_B := current_sum_ii_A;
+                    else
+                        var_integ_input_B := (others => '0');
+                    end if;
+                    var_integ_value_B := current_sum_ii_B;
                 end if;
 
                 safe_signed_add2(var_integ_input_A, var_integ_value_A, var_integ_next_A, var_railed_hi_A, var_railed_lo_A);
@@ -470,56 +487,6 @@ begin
             end if;
         end if;
     end process;
-
-
-    --sum_inst_ii_1 : entity work.signed_sum_with_saturation
-    --generic map (
-    --    DATA_WIDTH => OUTPUT_WIDTH,
-    --    REGISTER_OUTPUT => 1
-    --) port map (
-    --    clk       => clk,
-    --    ce        => '1',
-    --    a         => data_times_gain_ii_lim,
-    --    b         => first_int_output_switched,
-    --    c         => first_int_output,
-    --    railed_hi => open,
-    --    railed_lo => open
-    --);
-
-    --first_int_output_switched <= (others => '0') when (clr_reg = '1' or lock_reg = '0') else first_int_output;
-
-    --sum_inst_ii_2 : entity work.signed_sum_with_saturation
-    --generic map (
-    --    DATA_WIDTH => OUTPUT_WIDTH,
-    --    REGISTER_OUTPUT => 1
-    --) port map (
-    --    clk       => clk,
-    --    ce        => '1',
-    --    a         => first_int_output_switched,
-    --    b         => current_sum_ii,
-    --    c         => data_out_ii,
-    --    railed_hi => railed_hi_ii2,
-    --    railed_lo => railed_lo_ii2
-    --);
-
-    --current_sum_ii <= (others => '0') when (clr_reg = '1') else data_out_ii;
-
-    --double_integrator_limiting : process (clk) is
-    --begin
-    --    if rising_edge(clk) then
-    --        if ce = '1' then
-
-    --            if railed_hi_ii2 = '1' and data_times_gain_ii(OUTPUT_WIDTH-1) = '0' then
-    --                data_times_gain_ii_lim <= (others => '0');
-    --            elsif railed_lo_ii2 = '1' and data_times_gain_ii(OUTPUT_WIDTH-1) = '1' then
-    --                data_times_gain_ii_lim <= (others => '0');
-    --            else
-    --                data_times_gain_ii_lim <= data_times_gain_ii;
-    --            end if;
-
-    --        end if;
-    --    end if;
-    --end process;
 
     ----------------------------------------------------------------
     -- Dither & "VNA"
@@ -573,24 +540,18 @@ begin
         if rising_edge(clk) then
             if ce = '1' then
 
-                sum_dith                <= std_logic_vector(                          resize(signed(dither_out),            OUTPUT_WIDTH+3) );
-                sum_dith_ii             <= std_logic_vector(signed(sum_dith)        + resize(signed(current_sum_ii_B),  OUTPUT_WIDTH+3) );
-                sum_dith_ii_i           <= std_logic_vector(signed(sum_dith_ii)     + resize(signed(current_sum_i),         OUTPUT_WIDTH+3) );
-                --sum_dith_ii_i_p         <= std_logic_vector(signed(sum_dith_ii_i)   + resize(signed(data_out_p),            OUTPUT_WIDTH+3));
-                --sum_dith_ii_i_p_d       <= std_logic_vector(signed(sum_dith_ii_i_p) + resize(signed(data_out_d),            OUTPUT_WIDTH+3));
-                sum_dith_ii_i_p_d       <= std_logic_vector(signed(sum_dith_ii_i)   + resize(signed(data_out_p),OUTPUT_WIDTH+3) + resize(signed(data_out_d),OUTPUT_WIDTH+3) );
+                sum_dith                <= std_logic_vector( resize(signed(dither_out), OUTPUT_WIDTH+3) );
+                sum_dith_ii             <= std_logic_vector( signed(sum_dith) + resize(signed(current_sum_ii_B), OUTPUT_WIDTH+3) );
+                sum_dith_ii_i           <= std_logic_vector( signed(sum_dith_ii) + resize(signed(current_sum_i), OUTPUT_WIDTH+3) );
+                sum_dith_ii_i_p_d       <= std_logic_vector( signed(sum_dith_ii_i) + resize(signed(data_out_p), OUTPUT_WIDTH+3) + resize(signed(data_out_d), OUTPUT_WIDTH+3) );
 
                 sum_railed_hi_ii        <= railed_hi_ii or railed_hi_ii2;
-                sum_railed_hi_ii_i      <= sum_railed_hi_ii     or railed_hi_i or railed_hi_i2;
-                --sum_railed_hi_ii_i_p    <= sum_railed_hi_ii_i   or railed_hi_p;
-                --sum_railed_hi_ii_i_p_d  <= sum_railed_hi_ii_i_p or railed_hi_d;
-                sum_railed_hi_ii_i_p_d  <= sum_railed_hi_ii_i_p or railed_hi_p or railed_hi_d;
+                sum_railed_hi_ii_i      <= sum_railed_hi_ii or railed_hi_i or railed_hi_i2;
+                sum_railed_hi_ii_i_p_d  <= sum_railed_hi_ii_i_p or railed_hi_p or railed_hi_d or railed_hi_d2;
 
                 sum_railed_lo_ii        <= railed_lo_ii or railed_lo_ii2;
-                sum_railed_lo_ii_i      <= sum_railed_lo_ii     or railed_lo_i or railed_lo_i2;
-                --sum_railed_lo_ii_i_p    <= sum_railed_lo_ii_i   or railed_lo_p;
-                --sum_railed_lo_ii_i_p_d  <= sum_railed_lo_ii_i_p or railed_lo_d;
-                sum_railed_lo_ii_i_p_d  <= sum_railed_lo_ii_i_p or railed_lo_p or railed_lo_d;
+                sum_railed_lo_ii_i      <= sum_railed_lo_ii or railed_lo_i or railed_lo_i2;
+                sum_railed_lo_ii_i_p_d  <= sum_railed_lo_ii_i_p or railed_lo_p or railed_lo_d or railed_lo_d2;
 
             end if;
         end if;
