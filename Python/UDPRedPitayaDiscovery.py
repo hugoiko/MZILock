@@ -24,7 +24,7 @@ class UDPRedPitayaDiscovery():
         self.sock_conn = None
         self.sock_server = None
         
-        self.bVerbose = True
+        self.bVerbose = False
         
         #self.startListening()
 
@@ -92,7 +92,8 @@ class UDPRedPitayaDiscovery():
             
             (host, mac_address) = self.check_answers()
 #            if not host is None:
-            print (host, mac_address)
+            if self.bVerbose:
+                print (host, mac_address)
             
             time.sleep(0.1)
             ElapsedTime = time.clock() - start_time

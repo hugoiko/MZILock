@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>431</width>
+    <height>354</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Loop Filter</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="5">
+    <widget class="QPushButton" name="checkDitherEnabled">
+     <property name="text">
+      <string>Dither Enabled</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="7">
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>Amplitude</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="8">
+    <widget class="QLineEdit" name="editDitherAmpli"/>
+   </item>
+   <item row="0" column="8">
+    <widget class="QLineEdit" name="editDitherPeriod"/>
+   </item>
+   <item row="8" column="0" colspan="9">
+    <widget class="QwtPlot" name="qwtPlot">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>200</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="7">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>Period</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="3">
+    <widget class="QLineEdit" name="editGainI"/>
+   </item>
+   <item row="0" column="3">
+    <widget class="QLineEdit" name="editGainP"/>
+   </item>
+   <item row="2" column="3">
+    <widget class="QLineEdit" name="editGainII"/>
+   </item>
+   <item row="5" column="3">
+    <widget class="QLineEdit" name="editGainFD"/>
+   </item>
+   <item row="1" column="1">
+    <widget class="QPushButton" name="buttonClearIntegrators">
+     <property name="text">
+      <string>Clear Integrators</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QPushButton" name="checkLockEnabled">
+     <property name="text">
+      <string>Lock Enabled</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="2">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>d filter</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="2">
+    <widget class="QCheckBox" name="checkBranchEnabledD">
+     <property name="text">
+      <string>K_d</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2">
+    <widget class="QCheckBox" name="checkBranchEnabledP">
+     <property name="text">
+      <string>K_p</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QCheckBox" name="checkBranchEnabledI">
+     <property name="text">
+      <string>K_i</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QCheckBox" name="checkBranchEnabledII">
+     <property name="text">
+      <string>K_ii</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="3">
+    <widget class="QLineEdit" name="editGainD"/>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QwtPlot</class>
+   <extends>QFrame</extends>
+   <header>qwt_plot.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

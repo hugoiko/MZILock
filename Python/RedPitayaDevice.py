@@ -2,11 +2,9 @@
 
 import socket
 import struct
-import traceback    # for print_stack, for debugging purposes: traceback.print_stack()
 import time
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 class RedPitayaDevice():
 
@@ -27,6 +25,9 @@ class RedPitayaDevice():
     def __init__(self):
         self.bConnected = False
 
+    def open_tcp_connection(self, HOST, PORT=5000):
+        self.OpenTCPConnection(HOST=HOST, PORT=PORT)
+
     def OpenTCPConnection(self, HOST, PORT=5000):
         self.HOST = HOST
         self.PORT = PORT
@@ -42,13 +43,15 @@ class RedPitayaDevice():
             self.bConnected = False
             return value
 
+    def close_tcp_connection(self):
+        self.CloseTCPConnection()
+
     def CloseTCPConnection(self):
         self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
         self.bConnected = False
 
-    # from http://stupidpythonideas.blogspot.ca/2013/05/sockets-are-byte-streams-not-message.html
-    def recvall(self, count):
+    def _recvall(self, count):
         buf = b''
         
         while count:
@@ -108,7 +111,7 @@ class RedPitayaDevice():
         # print "read_Zynq_register_uint32(): address_uint32 = %s, self.FPGA_BASE_ADDR+address_uint32 = %s\n" % (hex(address_uint32), hex(self.FPGA_BASE_ADDR+address_uint32))
         packet_to_send = struct.pack('=III', self.MAGIC_BYTES_READ_REG, self.FPGA_BASE_ADDR+address_uint32, 0)  # last value is reserved
         self.sock.sendall(packet_to_send)
-        data_buffer = self.recvall(4)   # read 4 bytes (32 bits)
+        data_buffer = self._recvall(4)   # read 4 bytes (32 bits)
         if len(data_buffer) != 4:
             print "read_Zynq_register_uint32() Error: len(data_buffer) != 4: repr(data_buffer) = %s" % (repr(data_buffer))
         register_value_as_tuple = struct.unpack('I', data_buffer)
@@ -118,7 +121,7 @@ class RedPitayaDevice():
         # print "read_Zynq_register_int32(): address_uint32 = %s, self.FPGA_BASE_ADDR+address_uint32 = %s\n" % (hex(address_uint32), hex(self.FPGA_BASE_ADDR+address_uint32))
         packet_to_send = struct.pack('=III', self.MAGIC_BYTES_READ_REG, self.FPGA_BASE_ADDR+address_uint32, 0)  # last value is reserved
         self.sock.sendall(packet_to_send)
-        data_buffer = self.recvall(4)   # read 4 bytes (32 bits)
+        data_buffer = self._recvall(4)   # read 4 bytes (32 bits)
         if len(data_buffer) != 4:
             print "read_Zynq_register_uint32() Error: len(data_buffer) != 4: repr(data_buffer) = %s" % (repr(data_buffer))
         register_value_as_tuple = struct.unpack('i', data_buffer)
@@ -165,7 +168,7 @@ class RedPitayaDevice():
         number_of_uint32 = number_of_chars/4
         packet_to_send = struct.pack('=III', self.MAGIC_BYTES_READ_UINT32_BUFFER, self.FPGA_BASE_ADDR+address_uint32, number_of_uint32)    # last value is reserved
         self.sock.sendall(packet_to_send)
-        data_buffer = self.recvall(number_of_chars)
+        data_buffer = self._recvall(number_of_chars)
         return data_buffer
   
     def read_Zynq_buffer_int32(self, address_uint32, number_of_int32):
@@ -202,9 +205,6 @@ def main():
     #print(ret)
     ret = dev.read_Zynq_buffer_int16(0x00000, 2048)
     print(ret)
-    plt.plot(ret[0::2])
-    plt.plot(ret[1::2])
-    plt.show()
     
     dev.CloseTCPConnection()
 

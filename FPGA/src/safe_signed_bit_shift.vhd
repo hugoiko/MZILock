@@ -15,11 +15,13 @@ generic (
     QUANT_TYPE  : natural  := 1
 );
 port (
-    clk      : in  std_logic;
-    ce       : in  std_logic;
-    opmode   : in  std_logic_vector(1 downto 0);
-    data_in  : in  std_logic_vector(DATA_WIDTH-1 downto 0);
-    data_out : out std_logic_vector(DATA_WIDTH-1 downto 0)
+    clk       : in  std_logic;
+    ce        : in  std_logic;
+    opmode    : in  std_logic_vector(1 downto 0);
+    data_in   : in  std_logic_vector(DATA_WIDTH-1 downto 0);
+    data_out  : out std_logic_vector(DATA_WIDTH-1 downto 0);
+    railed_hi : out std_logic;
+    railed_lo : out std_logic
 );
 end entity;
 
@@ -137,5 +139,7 @@ begin
 
     -- Assign output
     data_out <= data_out_int;
+    railed_hi <= lim_railed_hi_int when (opmode = "10") else '0';
+    railed_lo <= lim_railed_lo_int when (opmode = "10") else '0';
     
 end architecture;

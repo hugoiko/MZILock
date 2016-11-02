@@ -67,20 +67,26 @@ always @(posedge clk) begin
     Amat12_reg <= Amat12;
     Amat22_reg <= Amat22;
 
-    IQ_i_real_reg <= IQ_i_real;
-    IQ_i_imag_reg <= IQ_i_imag;
 
-    IQ_i_real_cent <= IQ_i_real_reg + Bvect1_reg;
-    IQ_i_imag_cent <= IQ_i_imag_reg + Bvect2_reg;
 
     Amat11_real <= Amat11_reg * IQ_i_real_cent;
     Amat12_imag <= Amat12_reg * IQ_i_imag_cent;
     Amat21_real <= Amat21_reg * IQ_i_real_cent;
     Amat22_imag <= Amat22_reg * IQ_i_imag_cent;
 
+
+end
+
+
+always @(*) begin
+    IQ_i_real_reg <= IQ_i_real;
+    IQ_i_imag_reg <= IQ_i_imag;
+    
+    IQ_i_real_cent <= IQ_i_real_reg + Bvect1_reg;
+    IQ_i_imag_cent <= IQ_i_imag_reg + Bvect2_reg;
+
     IQ_o_real <= Amat11_real[SLICE_FROM:SLICE_TO] + Amat21_real[SLICE_FROM:SLICE_TO];
     IQ_o_imag <= Amat12_imag[SLICE_FROM:SLICE_TO] + Amat22_imag[SLICE_FROM:SLICE_TO];
-
 end
 
 endmodule

@@ -8,11 +8,14 @@ import ctypes
 from PyQt4 import QtCore, Qt, QtGui, uic
 
 from TCPConnectionWidget import TCPConnectionWidget
-from ADCControlWidget import ADCControlWidget
+from IQCalibrationWidget import IQCalibrationWidget
+from VisualizationWidget import VisualizationWidget
+from LoopFilterWidget import LoopFilterWidget
 from ConsoleWidget import ConsoleWidget
 from DynamicScriptsWidget import DynamicScriptsWidget
 from UDPRedPitayaDiscovery import UDPRedPitayaDiscovery
 from RedPitayaDevice import RedPitayaDevice
+from MZILockLiveCalc import MZILockLiveCalc
 
 ################################################################
 ## Custom MDI window that can't be closed
@@ -79,10 +82,10 @@ class MainWindow(QtGui.QMainWindow):
         self.UDPDiscovery.startListening()
 
         self.dev = RedPitayaDevice()
-        
+        self.calc = MZILockLiveCalc(self.dev)
 
         ################################################################
-        ## Serial connection widget
+        ## TCP Connection Widget
         self.instTCPConnectionWidget = TCPConnectionWidget(self, self.UDPDiscovery, self.dev)
         self.controlWidgetsFPGA.append(self.instTCPConnectionWidget)
         icon = QtGui.QIcon('icons/serial.png')
@@ -90,22 +93,48 @@ class MainWindow(QtGui.QMainWindow):
         subWin1.setWidget(self.instTCPConnectionWidget)
         subWin1.setWindowIcon(icon)
         self.mdiArea.addSubWindow(subWin1)
-        self.actionSerialConnection.triggered.connect(lambda: self.show_subwin(subWin1))
-        self.actionSerialConnection.setIcon(icon)
+        self.actionTCPConnection.triggered.connect(lambda: self.show_subwin(subWin1))
+        self.actionTCPConnection.setIcon(icon)
         #subWin1.hide()
     
         ################################################################
-        ## ADC control widget
-        self.instADCControlWidget = ADCControlWidget(self, self.dev)
-        self.controlWidgetsFPGA.append(self.instADCControlWidget)
+        ## IQ Calibration Widget
+        self.instIQCalibrationWidget = IQCalibrationWidget(self, self.dev)
+        self.controlWidgetsFPGA.append(self.instIQCalibrationWidget)
         icon = QtGui.QIcon('icons/adc.png')
         subWin2 = CustomQMdiSubWindow()
-        subWin2.setWidget(self.instADCControlWidget)
+        subWin2.setWidget(self.instIQCalibrationWidget)
         subWin2.setWindowIcon(icon)
         self.mdiArea.addSubWindow(subWin2)
-        self.actionADCControl.triggered.connect(lambda: self.show_subwin(subWin2))
-        self.actionADCControl.setIcon(icon)
+        self.actionIQCalibration.triggered.connect(lambda: self.show_subwin(subWin2))
+        self.actionIQCalibration.setIcon(icon)
         #subWin2.hide()
+
+        ################################################################
+        ## Visualization Widget
+        self.instVisualizationWidget = VisualizationWidget(self, self.dev)
+        self.controlWidgetsFPGA.append(self.instVisualizationWidget)
+        icon = QtGui.QIcon('icons/adc.png')
+        subWin3 = CustomQMdiSubWindow()
+        subWin3.setWidget(self.instVisualizationWidget)
+        subWin3.setWindowIcon(icon)
+        self.mdiArea.addSubWindow(subWin3)
+        self.actionVisualization.triggered.connect(lambda: self.show_subwin(subWin3))
+        self.actionVisualization.setIcon(icon)
+        #subWin3.hide()
+
+        ################################################################
+        ## Loop Filter Widget
+        self.instLoopFilterWidget = LoopFilterWidget(self, self.dev)
+        self.controlWidgetsFPGA.append(self.instLoopFilterWidget)
+        icon = QtGui.QIcon('icons/adc.png')
+        subWin4 = CustomQMdiSubWindow()
+        subWin4.setWidget(self.instLoopFilterWidget)
+        subWin4.setWindowIcon(icon)
+        self.mdiArea.addSubWindow(subWin4)
+        self.actionLoopFilter.triggered.connect(lambda: self.show_subwin(subWin4))
+        self.actionLoopFilter.setIcon(icon)
+        #subWin4.hide()
         
         ################################################################
         ## Dynamic scripts
@@ -118,7 +147,7 @@ class MainWindow(QtGui.QMainWindow):
         self.mdiArea.addSubWindow(subWin8)
         self.actionDynamicScripts.triggered.connect(lambda: self.show_subwin(subWin8))
         self.actionDynamicScripts.setIcon(icon)
-        #subWin8.hide()
+        subWin8.hide()
         
 
         ################################################################
@@ -131,7 +160,7 @@ class MainWindow(QtGui.QMainWindow):
         self.mdiArea.addSubWindow(subWin0)
         self.actionConsole.triggered.connect(lambda: self.show_subwin(subWin0))
         self.actionConsole.setIcon(icon)
-        # subWin0.hide()
+        #subWin0.hide()
 
         # Redirect STDIO
         if bRedirectStdio:
@@ -141,22 +170,30 @@ class MainWindow(QtGui.QMainWindow):
         
         ################################################################
         ## About and documentation
-        self.actionAbout.triggered.connect(self.showAbout)
-        self.actionDocumentation.triggered.connect(self.showDocumentation)
+        self.actionAbout.triggered.connect(self.show_about)
+        self.actionDocumentation.triggered.connect(self.show_documentation)
         
         self.update_widgets_connection_status(False)
 
         self.change_mdi_color(self.defaultColor)
 
+
+        ################################################################
+        ## Data Loop timer
+        timerPeriod_secs = 0.001
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.data_loop)
+        self.timer.start(round(1000*timerPeriod_secs))
+
      
     ################################################################
     ## Show about dialog box
-    def showAbout(self):
+    def show_about(self):
         QtGui.QMessageBox.about(self, "About", "")
      
     ################################################################
     ## Show documentation
-    def showDocumentation(self):
+    def show_documentation(self):
         os.startfile("test.pdf")
      
     ################################################################
@@ -185,7 +222,16 @@ class MainWindow(QtGui.QMainWindow):
             self.dev.CloseTCPConnection()
         self.UDPDiscovery.stopListening()
         
-        
+    ################################################################
+    ## Data Loop
+    def data_loop(self):
+        if not self.dev.bConnected:
+            return
+        self.calc.data_loop()
+
+
+
+
 ################################################################
 ## Main code
 ################################################################
@@ -215,8 +261,6 @@ def main():
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
 
-
-    print("Exiting")
     
 if __name__ == '__main__':
     main()

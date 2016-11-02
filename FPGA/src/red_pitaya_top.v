@@ -294,8 +294,13 @@ begin
 end
     
 // transform into 2's complement (negative slope)
-assign adc_a = digital_loop ? dac_a : {adc_dat_a[14-1], ~adc_dat_a[14-2:0]};
-assign adc_b = digital_loop ? dac_b : {adc_dat_b[14-1], ~adc_dat_b[14-2:0]};
+
+// assign adc_a = digital_loop ? dac_a : {adc_dat_a[14-1], ~adc_dat_a[14-2:0]};
+// assign adc_b = digital_loop ? dac_b : {adc_dat_b[14-1], ~adc_dat_b[14-2:0]};
+
+// HB 2016-10-25 : removing logic since digital_loop is not used in this project
+assign adc_a = {adc_dat_a[14-1], ~adc_dat_a[14-2:0]};
+assign adc_b = {adc_dat_b[14-1], ~adc_dat_b[14-2:0]};
 
 ////////////////////////////////////////////////////////////////////////////////
 // DAC IO

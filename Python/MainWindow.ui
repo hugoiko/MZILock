@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>UNICORN</string>
+   <string>MZI Lock</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -58,30 +58,10 @@
     <property name="title">
      <string>Windows</string>
     </property>
-    <addaction name="actionSerialConnection"/>
-    <addaction name="actionConsole"/>
-    <addaction name="separator"/>
-    <addaction name="actionDynamicScripts"/>
-    <addaction name="separator"/>
-    <addaction name="actionDSPControl"/>
-    <addaction name="actionUDPControl"/>
-    <addaction name="separator"/>
-    <addaction name="actionADCControl"/>
-    <addaction name="actionDACControl"/>
-    <addaction name="actionDDSControl_A"/>
-    <addaction name="actionDDSControl_B"/>
-    <addaction name="separator"/>
-    <addaction name="actionFrontendFilters0"/>
-    <addaction name="actionIGMScope0"/>
-    <addaction name="actionFrontendFilters1"/>
-    <addaction name="actionIGMScope1"/>
-    <addaction name="separator"/>
-    <addaction name="actionComms"/>
-    <addaction name="actionBackend"/>
-    <addaction name="actionSelfTest"/>
-    <addaction name="actionDSPAlgorithms"/>
-    <addaction name="separator"/>
-    <addaction name="actionDataAcquisition"/>
+    <addaction name="actionTCPConnection"/>
+    <addaction name="actionVisualization"/>
+    <addaction name="actionIQCalibration"/>
+    <addaction name="actionLoopFilter"/>
    </widget>
    <addaction name="menuConnection"/>
    <addaction name="menuWindows"/>
@@ -206,6 +186,26 @@
   <action name="actionDSPAlgorithms">
    <property name="text">
     <string>DSP Algorithms</string>
+   </property>
+  </action>
+  <action name="actionTCPConnection">
+   <property name="text">
+    <string>TCP Connection</string>
+   </property>
+  </action>
+  <action name="actionIQCalibration">
+   <property name="text">
+    <string>IQ Calibration</string>
+   </property>
+  </action>
+  <action name="actionVisualization">
+   <property name="text">
+    <string>Visualization</string>
+   </property>
+  </action>
+  <action name="actionLoopFilter">
+   <property name="text">
+    <string>Loop Filter</string>
    </property>
   </action>
  </widget>

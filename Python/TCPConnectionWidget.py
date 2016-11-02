@@ -110,7 +110,7 @@ class TCPConnectionWidget(ControlWidget):
             for s in m.groups():
                 dstIP += "%d." % (int(s))
             dstIP = dstIP[:-1]
-            print(dstIP)
+            #print(dstIP)
             self.UDPDiscovery.broadcast_address = dstIP
             self.UDPDiscovery.send_broadcast()
 

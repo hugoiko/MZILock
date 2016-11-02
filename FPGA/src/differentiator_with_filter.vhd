@@ -29,6 +29,7 @@ entity differentiator_with_filter is
     );
     port (
         clk      : in  std_logic;
+        ce       : in  std_logic;
         coef     : in  std_logic_vector(18-1 downto 0);
         data_in  : in  std_logic_vector(N_DATA-1 downto 0);
         data_out : out std_logic_vector(18-1 downto 0)
@@ -58,8 +59,10 @@ begin
     process (clk) is
     begin
         if rising_edge(clk) then
-            coef_reg <= signed(coef);
-            data_in_dly <= data_in_int;
+            if ce = '1' then
+                coef_reg <= signed(coef);
+                data_in_dly <= data_in_int;
+            end if;
         end if;
     end process;
     
@@ -67,8 +70,10 @@ begin
     process (clk) is
     begin
         if rising_edge(clk) then
-            diff_result <=  resize(data_in_int, diff_result'length) - 
-                            resize(data_in_dly, diff_result'length);
+            if ce = '1' then
+                diff_result <=  resize(data_in_int, diff_result'length) - 
+                                resize(data_in_dly, diff_result'length);
+            end if;
         end if;
     end process;
 	
@@ -77,7 +82,9 @@ begin
     process (clk) is
     begin
         if rising_edge(clk) then
-            data_out_wide <= data_out_wide + delta*coef_reg;
+            if ce = '1' then
+                data_out_wide <= data_out_wide + delta*coef_reg;
+            end if;
         end if;
     end process;
     data_out_int <= resize(shift_right(data_out_wide, 18), data_out_int'length);
