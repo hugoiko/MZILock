@@ -114,10 +114,10 @@ class MZILockLiveCalc:
 
         self.IQ_cal_Bvect1 = int(round((self.NORMALIZATION)*B[0,0]))
         self.IQ_cal_Bvect2 = int(round((self.NORMALIZATION)*B[1,0]))
-        self.IQ_cal_Amat11 = int(round((self.UNITY_GAIN)*A[0,0]))
-        self.IQ_cal_Amat21 = int(round((self.UNITY_GAIN)*A[1,0]))
-        self.IQ_cal_Amat12 = int(round((self.UNITY_GAIN)*A[0,1]))
-        self.IQ_cal_Amat22 = int(round((self.UNITY_GAIN)*A[1,1]))
+        self.IQ_cal_Amat11 = int(round((self.UNITY_GAIN)*A[0,0]/4.0))
+        self.IQ_cal_Amat21 = int(round((self.UNITY_GAIN)*A[1,0]/4.0))
+        self.IQ_cal_Amat12 = int(round((self.UNITY_GAIN)*A[0,1]/4.0))
+        self.IQ_cal_Amat22 = int(round((self.UNITY_GAIN)*A[1,1]/4.0))
 
     def data_loop(self):
 

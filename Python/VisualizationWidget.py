@@ -105,7 +105,7 @@ class VisualizationWidget(ControlWidget):
 
         self.graphD.setAxisTitle(Qwt5.QwtPlot.yLeft, "Magnitude [rad^2/Hz]")
         self.graphD.setAxisScaleEngine(Qwt5.QwtPlot.yLeft, Qwt5.QwtLog10ScaleEngine())
-        self.graphD.setAxisScale(Qwt5.QwtPlot.yLeft, 1e-10, 1e4)
+        self.graphD.setAxisScale(Qwt5.QwtPlot.yLeft, 1e-6, 1e2)
 
         self.graphD.setCanvasBackground(Qt.QColor(0,0,0))
         
@@ -136,6 +136,8 @@ class VisualizationWidget(ControlWidget):
     
                 self.curve5.setData(self.calc.freq_axis, self.calc.spectrum)
                 self.graphD.replot()
+                
+                self.editStd.setText("%.16f" % numpy.std(self.calc.IQ_o_angle*(2.0*numpy.pi/4294967296.0)))
 
 
     def update_content(self):

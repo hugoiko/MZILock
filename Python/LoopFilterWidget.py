@@ -58,7 +58,7 @@ class LoopFilterWidget(ControlWidget):
                 
     def update(self):
         pass
-            
+    
     def float_to_hdr_gain_code(self, gain, max_shifts=None):
         MAX_SHIFTERS = 6
         if max_shifts is None:
@@ -68,28 +68,76 @@ class LoopFilterWidget(ControlWidget):
             
         if gain == 0.0:
             return (0, 0.0)
+            
+        MINIMUM_GAIN = (2.0**-16.0)
+        MAXIMUM_GAIN = (2.0**8.0)
 
-        log256_gain = numpy.log(numpy.abs(gain))/numpy.log(256.0)
-        log256_sign = numpy.sign(log256_gain)
-        n_shifts = numpy.floor(numpy.abs(log256_gain))
-        gain_mant = numpy.round((2.0**16.0)* gain * 256.0**(-log256_sign*n_shifts))
-
-        if n_shifts > max_shifts:
-            n_shifts = max_shifts
-
-        actual_gain = (2.0**-16.0) * gain_mant * 256.0**(log256_sign*n_shifts)
-
+        curr_mant = gain;
+        
+        n_right_shifts = 0
+        while (abs(curr_mant) < MINIMUM_GAIN or n_right_shifts < max_shifts) and (abs(curr_mant)*256.0 <= MAXIMUM_GAIN):
+            n_right_shifts += 1
+            curr_mant *= 256.0
+            
+        n_left_shifts = 0
+        while (abs(curr_mant) > MAXIMUM_GAIN):
+            n_left_shifts += 1
+            curr_mant /= 256.0
+            
+        gain_mant = round((2.0**16.0)*curr_mant)
+        
+        actual_gain = (2.0**-16.0) * gain_mant * 256.0**(n_left_shifts-n_right_shifts)
+            
+        if n_right_shifts and n_left_shifts:
+            raise Exception("Both right shifts and left shifts")
+            
         code = 0x80000000
-        if int(log256_sign) == -1:
+        if n_right_shifts != 0 and n_left_shifts == 0:
             code = 0x00000000
 
+        n_shifts = n_right_shifts+n_left_shifts  
+            
         shift_codes = [0x00000000, 0x02000000, 0x06000000, 0x0E000000, 0x1E000000, 0x3E000000, 0x7E000000]
         code |= shift_codes[int(n_shifts)]
 
         mant_mask = 0x01FFFFFF
         code |= (int(gain_mant) & mant_mask)
-
+        
         return (code, actual_gain)
+
+        
+            
+#    def float_to_hdr_gain_code(self, gain, max_shifts=None):
+#        MAX_SHIFTERS = 6
+#        if max_shifts is None:
+#            max_shifts = MAX_SHIFTERS
+#        if max_shifts > MAX_SHIFTERS:
+#            ValueError("Unsupported number of shifters")
+#            
+#        if gain == 0.0:
+#            return (0, 0.0)
+#
+#        log256_gain = numpy.log(numpy.abs(gain))/numpy.log(256.0)
+#        log256_sign = numpy.sign(log256_gain)
+#        n_shifts = numpy.floor(numpy.abs(log256_gain))
+#        gain_mant = numpy.round((2.0**16.0)* gain * 256.0**(-log256_sign*n_shifts))
+#
+#        if n_shifts > max_shifts:
+#            n_shifts = max_shifts
+#
+#        actual_gain = (2.0**-16.0) * gain_mant * 256.0**(log256_sign*n_shifts)
+#
+#        code = 0x80000000
+#        if int(log256_sign) == -1:
+#            code = 0x00000000
+#
+#        shift_codes = [0x00000000, 0x02000000, 0x06000000, 0x0E000000, 0x1E000000, 0x3E000000, 0x7E000000]
+#        code |= shift_codes[int(n_shifts)]
+#
+#        mant_mask = 0x01FFFFFF
+#        code |= (int(gain_mant) & mant_mask)
+#
+#        return (code, actual_gain)
 
     def hdr_gain_code_to_float(self, code):
         log256_sign = -1.0
@@ -136,10 +184,10 @@ class LoopFilterWidget(ControlWidget):
         self.editDitherAmpli.setText(str(self.dev.read_Zynq_register_uint32(self.REG_ADDR_DITHER_AMPLI)))
 
         self.editGainFD.setText(str(self.dev.read_Zynq_register_int32(self.REG_ADDR_COEF_D_FILT)))
-        self.editGainD.setText( "%g"%(self.hdr_gain_code_to_float(self.dev.read_Zynq_register_uint32(self.REG_ADDR_CMD_IN_D))))
-        self.editGainP.setText( "%g"%(self.hdr_gain_code_to_float(self.dev.read_Zynq_register_uint32(self.REG_ADDR_CMD_IN_P))))
-        self.editGainI.setText( "%g"%(self.hdr_gain_code_to_float(self.dev.read_Zynq_register_uint32(self.REG_ADDR_CMD_IN_I))))
-        self.editGainII.setText("%g"%(self.hdr_gain_code_to_float(self.dev.read_Zynq_register_uint32(self.REG_ADDR_CMD_IN_II))))
+        self.editGainD.setText( "%.16f"%(self.hdr_gain_code_to_float(self.dev.read_Zynq_register_uint32(self.REG_ADDR_CMD_IN_D))))
+        self.editGainP.setText( "%.16f"%(self.hdr_gain_code_to_float(self.dev.read_Zynq_register_uint32(self.REG_ADDR_CMD_IN_P))))
+        self.editGainI.setText( "%.16f"%(self.hdr_gain_code_to_float(self.dev.read_Zynq_register_uint32(self.REG_ADDR_CMD_IN_I))))
+        self.editGainII.setText("%.16f"%(self.hdr_gain_code_to_float(self.dev.read_Zynq_register_uint32(self.REG_ADDR_CMD_IN_II))))
         
     def checkBranchEnabledD_clicked(self):
         self.dev.write_Zynq_register_uint32(self.REG_ADDR_BRANCH_EN_D , int(self.checkBranchEnabledD.isChecked()))
@@ -184,7 +232,7 @@ class LoopFilterWidget(ControlWidget):
         try:
             val = float(self.editGainD.text())
             (code, act) = self.float_to_hdr_gain_code(val, 0)
-            self.editGainD.setText("%g"%(act))
+            self.editGainD.setText("%.16f"%(act))
             self.dev.write_Zynq_register_uint32(self.REG_ADDR_CMD_IN_D, code)
         except ValueError:
             pass
@@ -192,7 +240,7 @@ class LoopFilterWidget(ControlWidget):
         try:
             val = float(self.editGainP.text())
             (code, act) = self.float_to_hdr_gain_code(val, 0)
-            self.editGainP.setText("%g"%(act))
+            self.editGainP.setText("%.16f"%(act))
             self.dev.write_Zynq_register_uint32(self.REG_ADDR_CMD_IN_P, code)
         except ValueError:
             pass
@@ -200,7 +248,7 @@ class LoopFilterWidget(ControlWidget):
         try:
             val = float(self.editGainI.text())
             (code, act) = self.float_to_hdr_gain_code(val, 3)
-            self.editGainI.setText("%g"%(act))
+            self.editGainI.setText("%.16f"%(act))
             self.dev.write_Zynq_register_uint32(self.REG_ADDR_CMD_IN_I, code)
         except ValueError:
             pass
@@ -208,7 +256,7 @@ class LoopFilterWidget(ControlWidget):
         try:
             val = float(self.editGainII.text())
             (code, act) = self.float_to_hdr_gain_code(val, 6)
-            self.editGainII.setText("%g"%(act))
+            self.editGainII.setText("%.16f"%(act))
             self.dev.write_Zynq_register_uint32(self.REG_ADDR_CMD_IN_II, code)
         except ValueError:
             pass
@@ -219,8 +267,9 @@ if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)  
     test = LoopFilterWidget(None, None)
     
-    gain = 0
-    (code, actual_gain) = test.float_to_hdr_gain_code(gain, 6)
+    gain = -10
+    #test.float_to_hdr_gain_code_v2(gain, 6)
+    (code, actual_gain) = test.float_to_hdr_gain_code(gain, 3)
     recomp_gain = test.hdr_gain_code_to_float(code)
     print("%g -> 0x%08X -> %g, %g\n" % (gain, code, actual_gain, recomp_gain))
     
